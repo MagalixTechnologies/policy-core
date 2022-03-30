@@ -89,6 +89,7 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 					detailsMap, ok := detailsInt.(map[string]interface{})
 					if ok {
 						details = detailsMap
+						res.Details = details
 					}
 
 					var title string

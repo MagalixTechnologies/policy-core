@@ -11,16 +11,17 @@ const (
 
 // PolicyValidation defines the result of a policy validation result against an entity
 type PolicyValidation struct {
-	ID        string    `json:"id"`
-	AccountID string    `json:"account_id"`
-	ClusterID string    `json:"cluster_id"`
-	Policy    Policy    `json:"policy"`
-	Entity    Entity    `json:"entity"`
-	Status    string    `json:"status"`
-	Message   string    `json:"message"`
-	Type      string    `json:"source"`
-	Trigger   string    `json:"trigger"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        string                 `json:"id"`
+	AccountID string                 `json:"account_id"`
+	ClusterID string                 `json:"cluster_id"`
+	Policy    Policy                 `json:"policy"`
+	Entity    Entity                 `json:"entity"`
+	Status    string                 `json:"status"`
+	Message   string                 `json:"message"`
+	Details   map[string]interface{} `json:"-"`
+	Type      string                 `json:"source"`
+	Trigger   string                 `json:"trigger"`
+	CreatedAt time.Time              `json:"created_at"`
 }
 
 // PolicyValidationSummary contains violation and compliance result of a validate operation
