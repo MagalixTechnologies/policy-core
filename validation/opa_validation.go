@@ -71,39 +71,50 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 				errsChan <- fmt.Errorf("failed to parse policy %s: %w", policy.ID, err)
 				return
 			}
-			var opaErr opa.OPAError
-			res := domain.PolicyValidation{
-				ID:        uuid.NewV4().String(),
-				Policy:    policy,
-				Entity:    entity,
-				Type:      v.validationType,
-				CreatedAt: time.Now(),
-			}
 
+			var opaErr opa.OPAError
 			parameters := policy.GetParametersMap()
 			err = opaPolicy.EvalGateKeeperCompliant(entity.Manifest, parameters, PolicyQuery)
 			if err != nil {
 				if errors.As(err, &opaErr) {
-					details := make(map[string]interface{})
-					detailsInt := opaErr.GetDetails()
-					detailsMap, ok := detailsInt.(map[string]interface{})
-					if ok {
-						details = detailsMap
-						res.Details = details
-					}
-
-					var title string
-					if msg, ok := details["msg"]; ok {
-						title = msg.(string)
+					details := opaErr.GetDetails()
+					var violations []map[string]interface{}
+					if arr, ok := details.([]interface{}); ok {
+						for _, item := range arr {
+							if violation, ok := item.(map[string]interface{}); ok {
+								violations = append(violations, violation)
+							}
+						}
+					} else if m, ok := details.(map[string]interface{}); ok {
+						violations = append(violations, m)
 					} else {
-						title = policy.Name
+						violations = append(violations, map[string]interface{}{})
 					}
 
-					msg := fmt.Sprintf("%s in %s %s. Policy: %s", title, entity.Kind, entity.Name, policy.ID)
-					res.Status = domain.PolicyValidationStatusViolating
-					res.Message = msg
+					for _, violation := range violations {
+						var title string
+						if msg, ok := violation["msg"]; ok {
+							title = msg.(string)
+						} else {
+							title = policy.Name
+						}
 
-					violationsChan <- res
+						message := fmt.Sprintf("%s in %s %s. Policy: %s", title, entity.Kind, entity.Name, policy.ID)
+
+						result := domain.PolicyValidation{
+							ID:        uuid.NewV4().String(),
+							Policy:    policy,
+							Entity:    entity,
+							Type:      v.validationType,
+							CreatedAt: time.Now(),
+							Message:   message,
+							Status:    domain.PolicyValidationStatusViolating,
+							Details:   violation,
+						}
+
+						violationsChan <- result
+					}
+
 				} else {
 					errsChan <- fmt.Errorf(
 						"unable to evaluate resource against policy. policy id: %s. %w",
@@ -112,11 +123,16 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 				}
 
 			} else {
-				res.Status = domain.PolicyValidationStatusCompliant
-				compliancesChan <- res
-
+				result := domain.PolicyValidation{
+					ID:        uuid.NewV4().String(),
+					Policy:    policy,
+					Entity:    entity,
+					Type:      v.validationType,
+					CreatedAt: time.Now(),
+					Status:    domain.PolicyValidationStatusCompliant,
+				}
+				compliancesChan <- result
 			}
-
 		})(i)
 	}
 	violations := make([]domain.PolicyValidation, 0)
