@@ -148,9 +148,9 @@ func TestOpaValidator_Validate(t *testing.T) {
 				writeCompliance: false,
 				loadStubs: func(policiesSource *mock.MockPoliciesSource, sink *mock.MockPolicyValidationSink) {
 					missingOwner := testdata.Policies["missingOwner"]
-					missingOwner.Targets = domain.PolicyTargets{Kind: []string{"Deployment"}}
+					missingOwner.Targets = domain.PolicyTargets{Kinds: []string{"Deployment"}}
 					imageTag := testdata.Policies["imageTag"]
-					imageTag.Targets = domain.PolicyTargets{Kind: []string{"ReplicaSet"}}
+					imageTag.Targets = domain.PolicyTargets{Kinds: []string{"ReplicaSet"}}
 					policiesSource.EXPECT().GetAll(gomock.Any()).
 						Times(1).Return([]domain.Policy{
 						missingOwner,
@@ -179,9 +179,9 @@ func TestOpaValidator_Validate(t *testing.T) {
 				writeCompliance: false,
 				loadStubs: func(policiesSource *mock.MockPoliciesSource, sink *mock.MockPolicyValidationSink) {
 					missingOwner := testdata.Policies["missingOwner"]
-					missingOwner.Targets = domain.PolicyTargets{Namespace: []string{"unit-testing"}}
+					missingOwner.Targets = domain.PolicyTargets{Namespaces: []string{"unit-testing"}}
 					imageTag := testdata.Policies["imageTag"]
-					imageTag.Targets = domain.PolicyTargets{Namespace: []string{"bad-namespace"}}
+					imageTag.Targets = domain.PolicyTargets{Namespaces: []string{"bad-namespace"}}
 					policiesSource.EXPECT().GetAll(gomock.Any()).
 						Times(1).Return([]domain.Policy{
 						missingOwner,
@@ -210,9 +210,9 @@ func TestOpaValidator_Validate(t *testing.T) {
 				writeCompliance: false,
 				loadStubs: func(policiesSource *mock.MockPoliciesSource, sink *mock.MockPolicyValidationSink) {
 					missingOwner := testdata.Policies["missingOwner"]
-					missingOwner.Targets = domain.PolicyTargets{Label: []map[string]string{{"app": "nginx"}}}
+					missingOwner.Targets = domain.PolicyTargets{Labels: []map[string]string{{"app": "nginx"}}}
 					imageTag := testdata.Policies["imageTag"]
-					imageTag.Targets = domain.PolicyTargets{Label: []map[string]string{{"app": "notfound"}}}
+					imageTag.Targets = domain.PolicyTargets{Labels: []map[string]string{{"app": "notfound"}}}
 					policiesSource.EXPECT().GetAll(gomock.Any()).
 						Times(1).Return([]domain.Policy{
 						missingOwner,
@@ -242,15 +242,15 @@ func TestOpaValidator_Validate(t *testing.T) {
 				loadStubs: func(policiesSource *mock.MockPoliciesSource, sink *mock.MockPolicyValidationSink) {
 					missingOwner := testdata.Policies["missingOwner"]
 					missingOwner.Targets = domain.PolicyTargets{
-						Label:     []map[string]string{{"app": "nginx"}},
-						Namespace: []string{"unit-testing"},
-						Kind:      []string{"Deployment"},
+						Labels:     []map[string]string{{"app": "nginx"}},
+						Namespaces: []string{"unit-testing"},
+						Kinds:      []string{"Deployment"},
 					}
 					imageTag := testdata.Policies["imageTag"]
 					imageTag.Targets = domain.PolicyTargets{
-						Label:     []map[string]string{{"app": "nginx"}},
-						Namespace: []string{"bad-namespace"},
-						Kind:      []string{"Deployment"},
+						Labels:     []map[string]string{{"app": "nginx"}},
+						Namespaces: []string{"bad-namespace"},
+						Kinds:      []string{"Deployment"},
 					}
 					policiesSource.EXPECT().GetAll(gomock.Any()).
 						Times(1).Return([]domain.Policy{
@@ -280,7 +280,7 @@ func TestOpaValidator_Validate(t *testing.T) {
 				writeCompliance: true,
 				loadStubs: func(policiesSource *mock.MockPoliciesSource, sink *mock.MockPolicyValidationSink) {
 					imageTag := testdata.Policies["imageTag"]
-					imageTag.Targets = domain.PolicyTargets{Label: []map[string]string{{"app": "notfound"}}}
+					imageTag.Targets = domain.PolicyTargets{Labels: []map[string]string{{"app": "notfound"}}}
 					policiesSource.EXPECT().GetAll(gomock.Any()).
 						Times(1).Return([]domain.Policy{
 						imageTag,

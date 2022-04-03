@@ -4,16 +4,16 @@ import v1 "k8s.io/api/core/v1"
 
 // PolicyTargets is used to match entities with the required fields specified by the policy
 type PolicyTargets struct {
-	Kind      []string            `json:"kind"`
-	Label     []map[string]string `json:"label"`
-	Namespace []string            `json:"namespace"`
+	Kinds      []string            `json:"kinds"`
+	Labels     []map[string]string `json:"labels"`
+	Namespaces []string            `json:"namespaces"`
 }
 
 // PolicyParameters defines a needed input in a policy
 type PolicyParameters struct {
 	Name     string      `json:"name"`
 	Type     string      `json:"type"`
-	Default  interface{} `json:"default"`
+	Value    interface{} `json:"value"`
 	Required bool        `json:"required"`
 }
 
@@ -47,7 +47,7 @@ func (p *Policy) ObjectRef() *v1.ObjectReference {
 func (p *Policy) GetParametersMap() map[string]interface{} {
 	res := make(map[string]interface{})
 	for _, param := range p.Parameters {
-		res[param.Name] = param.Default
+		res[param.Name] = param.Value
 	}
 	return res
 }
