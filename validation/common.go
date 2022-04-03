@@ -11,11 +11,11 @@ func matchEntity(entity domain.Entity, policy domain.Policy) bool {
 	var matchNamespace bool
 	var matchLabel bool
 
-	if len(policy.Targets.Kind) == 0 {
+	if len(policy.Targets.Kinds) == 0 {
 		matchKind = true
 	} else {
 		resourceKind := entity.Kind
-		for _, kind := range policy.Targets.Kind {
+		for _, kind := range policy.Targets.Kinds {
 			if resourceKind == kind {
 				matchKind = true
 				break
@@ -23,11 +23,11 @@ func matchEntity(entity domain.Entity, policy domain.Policy) bool {
 		}
 	}
 
-	if len(policy.Targets.Namespace) == 0 {
+	if len(policy.Targets.Namespaces) == 0 {
 		matchNamespace = true
 	} else {
 		resourceNamespace := entity.Namespace
-		for _, namespace := range policy.Targets.Namespace {
+		for _, namespace := range policy.Targets.Namespaces {
 			if resourceNamespace == namespace {
 				matchNamespace = true
 				break
@@ -35,11 +35,11 @@ func matchEntity(entity domain.Entity, policy domain.Policy) bool {
 		}
 	}
 
-	if len(policy.Targets.Label) == 0 {
+	if len(policy.Targets.Labels) == 0 {
 		matchLabel = true
 	} else {
 	outer:
-		for _, obj := range policy.Targets.Label {
+		for _, obj := range policy.Targets.Labels {
 			for key, val := range obj {
 				entityVal, ok := entity.Labels[key]
 				if ok {
