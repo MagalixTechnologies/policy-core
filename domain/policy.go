@@ -1,6 +1,8 @@
 package domain
 
-import v1 "k8s.io/api/core/v1"
+import (
+	v1 "k8s.io/api/core/v1"
+)
 
 // PolicyTargets is used to match entities with the required fields specified by the policy
 type PolicyTargets struct {
@@ -22,7 +24,7 @@ type Policy struct {
 	Name        string             `json:"name"`
 	ID          string             `json:"id"`
 	Code        string             `json:"code"`
-	Enable      string             `json:"enable"`
+	Enable      bool               `json:"enable"`
 	Parameters  []PolicyParameters `json:"parameters"`
 	Targets     PolicyTargets      `json:"targets"`
 	Description string             `json:"description"`

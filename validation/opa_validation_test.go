@@ -111,16 +111,18 @@ func TestOpaValidator_Validate(t *testing.T) {
 			want: &domain.PolicyValidationSummary{
 				Violations: []domain.PolicyValidation{
 					{
-						Policy: testdata.Policies["imageTag"],
-						Entity: entity,
-						Type:   validationType,
-						Status: domain.PolicyValidationStatusViolating,
+						Policy:  testdata.Policies["imageTag"],
+						Entity:  entity,
+						Type:    validationType,
+						Status:  domain.PolicyValidationStatusViolating,
+						Trigger: validationType,
 					},
 					{
-						Policy: testdata.Policies["missingOwner"],
-						Entity: entity,
-						Type:   validationType,
-						Status: domain.PolicyValidationStatusViolating,
+						Policy:  testdata.Policies["missingOwner"],
+						Entity:  entity,
+						Type:    validationType,
+						Status:  domain.PolicyValidationStatusViolating,
+						Trigger: validationType,
 					},
 				},
 			},
@@ -164,10 +166,11 @@ func TestOpaValidator_Validate(t *testing.T) {
 			want: &domain.PolicyValidationSummary{
 				Violations: []domain.PolicyValidation{
 					{
-						Policy: testdata.Policies["missingOwner"],
-						Entity: entity,
-						Type:   validationType,
-						Status: domain.PolicyValidationStatusViolating,
+						Policy:  testdata.Policies["missingOwner"],
+						Entity:  entity,
+						Type:    validationType,
+						Status:  domain.PolicyValidationStatusViolating,
+						Trigger: validationType,
 					},
 				},
 			},
@@ -195,10 +198,11 @@ func TestOpaValidator_Validate(t *testing.T) {
 			want: &domain.PolicyValidationSummary{
 				Violations: []domain.PolicyValidation{
 					{
-						Policy: testdata.Policies["missingOwner"],
-						Entity: entity,
-						Type:   validationType,
-						Status: domain.PolicyValidationStatusViolating,
+						Policy:  testdata.Policies["missingOwner"],
+						Entity:  entity,
+						Type:    validationType,
+						Status:  domain.PolicyValidationStatusViolating,
+						Trigger: validationType,
 					},
 				},
 			},
@@ -226,10 +230,11 @@ func TestOpaValidator_Validate(t *testing.T) {
 			want: &domain.PolicyValidationSummary{
 				Violations: []domain.PolicyValidation{
 					{
-						Policy: testdata.Policies["missingOwner"],
-						Entity: entity,
-						Type:   validationType,
-						Status: domain.PolicyValidationStatusViolating,
+						Policy:  testdata.Policies["missingOwner"],
+						Entity:  entity,
+						Type:    validationType,
+						Status:  domain.PolicyValidationStatusViolating,
+						Trigger: validationType,
 					},
 				},
 			},
@@ -265,10 +270,11 @@ func TestOpaValidator_Validate(t *testing.T) {
 			want: &domain.PolicyValidationSummary{
 				Violations: []domain.PolicyValidation{
 					{
-						Policy: testdata.Policies["missingOwner"],
-						Entity: entity,
-						Type:   validationType,
-						Status: domain.PolicyValidationStatusViolating,
+						Policy:  testdata.Policies["missingOwner"],
+						Entity:  entity,
+						Type:    validationType,
+						Status:  domain.PolicyValidationStatusViolating,
+						Trigger: validationType,
 					},
 				},
 			},
@@ -312,16 +318,52 @@ func TestOpaValidator_Validate(t *testing.T) {
 			want: &domain.PolicyValidationSummary{
 				Compliances: []domain.PolicyValidation{
 					{
-						Policy: testdata.Policies["imageTag"],
-						Entity: compliantEntity,
-						Type:   validationType,
-						Status: domain.PolicyValidationStatusCompliant,
+						Policy:  testdata.Policies["imageTag"],
+						Entity:  compliantEntity,
+						Type:    validationType,
+						Status:  domain.PolicyValidationStatusCompliant,
+						Trigger: validationType,
 					},
 					{
-						Policy: testdata.Policies["missingOwner"],
-						Entity: compliantEntity,
-						Type:   validationType,
-						Status: domain.PolicyValidationStatusCompliant,
+						Policy:  testdata.Policies["missingOwner"],
+						Entity:  compliantEntity,
+						Type:    validationType,
+						Status:  domain.PolicyValidationStatusCompliant,
+						Trigger: validationType,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "multiple violation",
+			init: init{
+				writeCompliance: false,
+				loadStubs: func(policiesSource *mock.MockPoliciesSource, sink *mock.MockPolicyValidationSink) {
+					policiesSource.EXPECT().GetAll(gomock.Any()).
+						Times(1).Return([]domain.Policy{
+						testdata.Policies["runningAsRoot"],
+					}, nil)
+					sink.EXPECT().Write(gomock.Any(), gomock.Any()).
+						Times(1).Return(nil)
+				},
+			},
+			entity: entity,
+			want: &domain.PolicyValidationSummary{
+				Violations: []domain.PolicyValidation{
+					{
+						Policy:  testdata.Policies["runningAsRoot"],
+						Entity:  entity,
+						Type:    validationType,
+						Status:  domain.PolicyValidationStatusViolating,
+						Trigger: validationType,
+					},
+					{
+						Policy:  testdata.Policies["runningAsRoot"],
+						Entity:  entity,
+						Type:    validationType,
+						Status:  domain.PolicyValidationStatusViolating,
+						Trigger: validationType,
 					},
 				},
 			},
@@ -345,6 +387,7 @@ func TestOpaValidator_Validate(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)

@@ -106,6 +106,7 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 							Policy:    policy,
 							Entity:    entity,
 							Type:      v.validationType,
+							Trigger:   trigger,
 							CreatedAt: time.Now(),
 							Message:   message,
 							Status:    domain.PolicyValidationStatusViolating,
@@ -128,6 +129,7 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 					Policy:    policy,
 					Entity:    entity,
 					Type:      v.validationType,
+					Trigger:   trigger,
 					CreatedAt: time.Now(),
 					Status:    domain.PolicyValidationStatusCompliant,
 				}
