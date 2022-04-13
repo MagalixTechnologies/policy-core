@@ -19,6 +19,11 @@ type PolicyParameters struct {
 	Required bool        `json:"required"`
 }
 
+type PolicyStandard struct {
+	Name     string   `json:"name"`
+	Controls []string `json:"controls"`
+}
+
 // Policy represents a policy
 type Policy struct {
 	Name        string             `json:"name"`
@@ -32,7 +37,7 @@ type Policy struct {
 	Category    string             `json:"category"`
 	Tags        []string           `json:"tags"`
 	Severity    string             `json:"severity"`
-	Controls    []string           `json:"controls"`
+	Standards   []PolicyStandard   `json:"standards"`
 	Reference   interface{}        `json:"-"`
 	GitCommit   string             `json:"git_commit,omitempty"`
 }
