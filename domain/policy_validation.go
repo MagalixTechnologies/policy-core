@@ -1,7 +1,9 @@
 package domain
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -49,7 +51,7 @@ func (v *PolicyValidationSummary) GetViolationMessages() []string {
 }
 
 // NewK8sEventFromPolicyVlidation gets kubernetes event object from policy violation result object
-func NewK8sEventFromPolicyVlidation(result PolicyValidation) v1.Event {
+func NewK8sEventFromPolicyValidation(result PolicyValidation) (*v1.Event, error) {
 	var reason, action, etype string
 
 	if result.Status == PolicyValidationStatusViolating {
@@ -62,15 +64,28 @@ func NewK8sEventFromPolicyVlidation(result PolicyValidation) v1.Event {
 		action = EventActionAllowed
 	}
 
+	standards, err := json.Marshal(result.Policy.Standards)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse policy validation standards: %w", err)
+	}
+	manifest, err := json.Marshal(result.Entity.Manifest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse policy validation entity manifest: %w", err)
+	}
+	tags := strings.Join(result.Policy.Tags, ",")
 	annotations := map[string]string{
-		"account_id": result.AccountID,
-		"cluster_id": result.ClusterID,
-		"id":         result.ID,
-		"policy":     result.Policy.ID,
-		"severity":   result.Policy.Severity,
-		"category":   result.Policy.Category,
-		"type":       result.Type,
-		"trigger":    result.Trigger,
+		"account_id":      result.AccountID,
+		"cluster_id":      result.ClusterID,
+		"id":              result.ID,
+		"policy_id":       result.Policy.ID,
+		"policy_name":     result.Policy.Name,
+		"severity":        result.Policy.Severity,
+		"category":        result.Policy.Category,
+		"type":            result.Type,
+		"trigger":         result.Trigger,
+		"standards":       string(standards),
+		"entity_manifest": string(manifest),
+		"tags":            tags,
 	}
 
 	namespace := result.Entity.Namespace
@@ -83,7 +98,7 @@ func NewK8sEventFromPolicyVlidation(result PolicyValidation) v1.Event {
 
 	timestamp := metav1.NewTime(time.Now())
 
-	event := v1.Event{
+	event := &v1.Event{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        fmt.Sprintf("%v.%x", result.Entity.Name, timestamp.UnixNano()),
 			Namespace:   namespace,
@@ -100,11 +115,11 @@ func NewK8sEventFromPolicyVlidation(result PolicyValidation) v1.Event {
 		LastTimestamp:  timestamp,
 	}
 
-	return event
+	return event, nil
 }
 
 // NewPolicyValidationFRomK8sEvent gets policy violation result object from kubernetes event object
-func NewPolicyValidationFRomK8sEvent(event *v1.Event) PolicyValidation {
+func NewPolicyValidationFRomK8sEvent(event *v1.Event) (PolicyValidation, error) {
 	annotations := event.ObjectMeta.Annotations
 	var status string
 	if event.Reason == EventReasonPolicyViolation {
@@ -112,7 +127,7 @@ func NewPolicyValidationFRomK8sEvent(event *v1.Event) PolicyValidation {
 	} else {
 		status = PolicyValidationStatusCompliant
 	}
-	return PolicyValidation{
+	policyValidation := PolicyValidation{
 		AccountID: annotations["account_id"],
 		ClusterID: annotations["cluster_id"],
 		ID:        annotations["id"],
@@ -122,10 +137,12 @@ func NewPolicyValidationFRomK8sEvent(event *v1.Event) PolicyValidation {
 		Message:   event.Message,
 		Status:    status,
 		Policy: Policy{
-			ID:        annotations["policy"],
+			ID:        annotations["policy_id"],
+			Name:      annotations["policy_name"],
 			Category:  annotations["category"],
 			Severity:  annotations["severity"],
 			Reference: event.Related,
+			Tags:      strings.Split(annotations["tags"], ","),
 		},
 		Entity: Entity{
 			APIVersion:      event.InvolvedObject.APIVersion,
@@ -136,4 +153,13 @@ func NewPolicyValidationFRomK8sEvent(event *v1.Event) PolicyValidation {
 			ResourceVersion: event.InvolvedObject.ResourceVersion,
 		},
 	}
+	err := json.Unmarshal([]byte(annotations["standards"]), &policyValidation.Policy.Standards)
+	if err != nil {
+		return policyValidation, fmt.Errorf("failed to get standards from event: %w", err)
+	}
+	err = json.Unmarshal([]byte(annotations["entity_manifest"]), &policyValidation.Entity.Manifest)
+	if err != nil {
+		return policyValidation, fmt.Errorf("failed to get entity manifest from event: %w", err)
+	}
+	return policyValidation, nil
 }
