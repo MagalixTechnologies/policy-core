@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -23,6 +25,13 @@ func TestPolicyToEvent(t *testing.T) {
 			Kind:            "Policy",
 			Name:            "my-policy",
 			ResourceVersion: "1",
+		},
+		Tags: []string{"tag"},
+		Standards: []PolicyStandard{
+			{
+				ID:       "stnd",
+				Controls: []string{"1.1.1"},
+			},
 		},
 	}
 
@@ -59,7 +68,8 @@ func TestPolicyToEvent(t *testing.T) {
 	}
 
 	for _, result := range results {
-		event := NewK8sEventFromPolicyVlidation(result)
+		event, err := NewK8sEventFromPolicyValidation(result)
+		assert.Nil(t, err)
 
 		if result.Status == PolicyValidationStatusViolating {
 			assert.Equal(t, event.Type, v1.EventTypeWarning)
@@ -88,15 +98,23 @@ func TestPolicyToEvent(t *testing.T) {
 		assert.Equal(t, event.Message, result.Message)
 
 		// verify metadata
+		manifest, err := json.Marshal(result.Entity.Manifest)
+		assert.Nil(t, err)
+		standards, err := json.Marshal(result.Policy.Standards)
+		assert.Nil(t, err)
 		assert.Equal(t, event.Annotations, map[string]string{
-			"account_id": result.AccountID,
-			"cluster_id": result.ClusterID,
-			"id":         result.ID,
-			"policy":     result.Policy.ID,
-			"severity":   result.Policy.Severity,
-			"category":   result.Policy.Category,
-			"type":       result.Type,
-			"trigger":    result.Trigger,
+			"account_id":      result.AccountID,
+			"cluster_id":      result.ClusterID,
+			"id":              result.ID,
+			"policy_id":       result.Policy.ID,
+			"policy_name":     result.Policy.Name,
+			"severity":        result.Policy.Severity,
+			"category":        result.Policy.Category,
+			"type":            result.Type,
+			"trigger":         result.Trigger,
+			"tags":            strings.Join(result.Policy.Tags, ","),
+			"standards":       string(standards),
+			"entity_manifest": string(manifest),
 		})
 	}
 }
@@ -113,14 +131,18 @@ func TestEventToPolicy(t *testing.T) {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: map[string]string{
-				"account_id": uuid.NewV4().String(),
-				"cluster_id": uuid.NewV4().String(),
-				"id":         uuid.NewV4().String(),
-				"type":       "Admission",
-				"trigger":    "Admission",
-				"policy":     uuid.NewV4().String(),
-				"category":   "category",
-				"severity":   "high",
+				"account_id":      uuid.NewV4().String(),
+				"cluster_id":      uuid.NewV4().String(),
+				"id":              uuid.NewV4().String(),
+				"type":            "Admission",
+				"trigger":         "Admission",
+				"policy_id":       uuid.NewV4().String(),
+				"policy_name":     "my-policy",
+				"category":        "category",
+				"severity":        "high",
+				"tags":            "tag1,tag2",
+				"entity_manifest": `{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"nginx-deployment","namespace":"default","uid":"af912668-957b-46d4-bc7a-51e6994cba56"},"spec":{"template":{"spec":{"containers":[{"image":"nginx:latest","imagePullPolicy":"Always","name":"nginx","ports":[{"containerPort":80,"protocol":"TCP"}]}]}}}}`,
+				"standards":       `[{"id":"weave.standards.cis-benchmark","controls":["weave.controls.cis-benchmark.5.5.1"]},{"id":"weave.standards.mitre-attack","controls":["weave.controls.mitre-attack.1.2"]},{"id":"weave.standards.gdpr","controls":["weave.controls.gdpr.25","weave.controls.gdpr.32","weave.controls.gdpr.24"]},{"id":"weave.standards.soc2-type-i","controls":["weave.controls.soc2-type-i.1.6.8"]}]`,
 			},
 		},
 		Message: "Policy event",
@@ -134,7 +156,8 @@ func TestEventToPolicy(t *testing.T) {
 		},
 	}
 
-	policyValidation := NewPolicyValidationFRomK8sEvent(&event)
+	policyValidation, err := NewPolicyValidationFRomK8sEvent(&event)
+	assert.Nil(t, err)
 
 	assert.Equal(t, policyValidation.Status, PolicyValidationStatusViolating)
 	assert.Equal(t, event.InvolvedObject.APIVersion, policyValidation.Entity.APIVersion)
@@ -150,14 +173,22 @@ func TestEventToPolicy(t *testing.T) {
 	assert.Equal(t, event.Message, policyValidation.Message)
 
 	// verify metadata
+	manifest, err := json.Marshal(policyValidation.Entity.Manifest)
+	assert.Nil(t, err)
+	standards, err := json.Marshal(policyValidation.Policy.Standards)
+	assert.Nil(t, err)
 	assert.Equal(t, event.Annotations, map[string]string{
-		"account_id": policyValidation.AccountID,
-		"cluster_id": policyValidation.ClusterID,
-		"id":         policyValidation.ID,
-		"policy":     policyValidation.Policy.ID,
-		"severity":   policyValidation.Policy.Severity,
-		"category":   policyValidation.Policy.Category,
-		"type":       policyValidation.Type,
-		"trigger":    policyValidation.Trigger,
+		"account_id":      policyValidation.AccountID,
+		"cluster_id":      policyValidation.ClusterID,
+		"id":              policyValidation.ID,
+		"policy_id":       policyValidation.Policy.ID,
+		"policy_name":     policyValidation.Policy.Name,
+		"severity":        policyValidation.Policy.Severity,
+		"category":        policyValidation.Policy.Category,
+		"type":            policyValidation.Type,
+		"trigger":         policyValidation.Trigger,
+		"tags":            strings.Join(policyValidation.Policy.Tags, ","),
+		"standards":       string(standards),
+		"entity_manifest": string(manifest),
 	})
 }

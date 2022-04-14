@@ -20,7 +20,7 @@ type PolicyParameters struct {
 }
 
 type PolicyStandard struct {
-	Name     string   `json:"name"`
+	ID       string   `json:"id"`
 	Controls []string `json:"controls"`
 }
 
