@@ -29,7 +29,7 @@ type Policy struct {
 	Name        string             `json:"name"`
 	ID          string             `json:"id"`
 	Code        string             `json:"code"`
-	Enable      bool               `json:"enable"`
+	Enabled     bool               `json:"enabled"`
 	Parameters  []PolicyParameters `json:"parameters"`
 	Targets     PolicyTargets      `json:"targets"`
 	Description string             `json:"description"`
