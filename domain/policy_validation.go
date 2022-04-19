@@ -17,7 +17,8 @@ const (
 	EventActionRejected             = "Rejected"
 	EventReasonPolicyViolation      = "PolicyViolation"
 	EventReasonPolicyCompliance     = "PolicyCompliance"
-	PolicyValidationEventLabelKey   = "policy-validation.weave.works"
+	PolicyValidationTypeLabel       = "pac.weave.works/v1/validation.type"
+	PolicyValidationIDLabel         = "pac.weave.works/v1/validation.id"
 )
 
 // PolicyValidation defines the result of a policy validation result against an entity
@@ -86,6 +87,8 @@ func NewK8sEventFromPolicyValidation(result PolicyValidation) (*v1.Event, error)
 		"standards":       string(standards),
 		"entity_manifest": string(manifest),
 		"tags":            tags,
+		"description":     result.Policy.Description,
+		"how_to_solve":    result.Policy.HowToSolve,
 	}
 
 	namespace := result.Entity.Namespace
@@ -103,7 +106,10 @@ func NewK8sEventFromPolicyValidation(result PolicyValidation) (*v1.Event, error)
 			Name:        fmt.Sprintf("%v.%x", result.Entity.Name, timestamp.UnixNano()),
 			Namespace:   namespace,
 			Annotations: annotations,
-			Labels:      map[string]string{PolicyValidationEventLabelKey: result.Type},
+			Labels: map[string]string{
+				PolicyValidationIDLabel:   result.ID,
+				PolicyValidationTypeLabel: result.Type,
+			},
 		},
 		InvolvedObject: *involvedObject,
 		Related:        relatedObject,
@@ -137,12 +143,14 @@ func NewPolicyValidationFRomK8sEvent(event *v1.Event) (PolicyValidation, error) 
 		Message:   event.Message,
 		Status:    status,
 		Policy: Policy{
-			ID:        annotations["policy_id"],
-			Name:      annotations["policy_name"],
-			Category:  annotations["category"],
-			Severity:  annotations["severity"],
-			Reference: event.Related,
-			Tags:      strings.Split(annotations["tags"], ","),
+			ID:          annotations["policy_id"],
+			Name:        annotations["policy_name"],
+			Category:    annotations["category"],
+			Severity:    annotations["severity"],
+			Description: annotations["description"],
+			HowToSolve:  annotations["how_to_solve"],
+			Reference:   event.Related,
+			Tags:        strings.Split(annotations["tags"], ","),
 		},
 		Entity: Entity{
 			APIVersion:      event.InvolvedObject.APIVersion,
