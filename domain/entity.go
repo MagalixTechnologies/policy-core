@@ -19,6 +19,7 @@ type Entity struct {
 	ResourceVersion string                 `json:"resource_version"`
 	Labels          map[string]string      `json:"labels"`
 	GitCommit       string                 `json:"git_commit,omitempty,"`
+	HasParent       bool                   `json:"has_parent"`
 }
 
 // ObjectRef returns the kubernetes object reference of the entity
@@ -36,6 +37,8 @@ func (e *Entity) ObjectRef() *v1.ObjectReference {
 // NewEntityFromSpec takes map representing a Kubernetes entity and parses it into Entity struct
 func NewEntityFromSpec(entitySpec map[string]interface{}) Entity {
 	kubeEntity := unstructured.Unstructured{Object: entitySpec}
+	metadata := entitySpec["metadata"].(map[string]interface{})
+	delete(metadata, "managedFields")
 	return Entity{
 		ID:              string(kubeEntity.GetUID()),
 		Name:            kubeEntity.GetName(),
@@ -45,6 +48,7 @@ func NewEntityFromSpec(entitySpec map[string]interface{}) Entity {
 		Manifest:        entitySpec,
 		ResourceVersion: kubeEntity.GetResourceVersion(),
 		Labels:          kubeEntity.GetLabels(),
+		HasParent:       len(kubeEntity.GetOwnerReferences()) != 0,
 	}
 }
 
