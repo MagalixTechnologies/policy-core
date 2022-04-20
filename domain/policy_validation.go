@@ -17,7 +17,9 @@ const (
 	EventActionRejected             = "Rejected"
 	EventReasonPolicyViolation      = "PolicyViolation"
 	EventReasonPolicyCompliance     = "PolicyCompliance"
-	PolicyValidationEventLabelKey   = "policy-validation.weave.works"
+	PolicyValidationTypeLabel       = "pac.weave.works/type"
+	PolicyValidationIDLabel         = "pac.weave.works/id"
+	PolicyValidationTriggerLabel    = "pac.weave.works/trigger"
 )
 
 // PolicyValidation defines the result of a policy validation result against an entity
@@ -76,16 +78,15 @@ func NewK8sEventFromPolicyValidation(result PolicyValidation) (*v1.Event, error)
 	annotations := map[string]string{
 		"account_id":      result.AccountID,
 		"cluster_id":      result.ClusterID,
-		"id":              result.ID,
 		"policy_id":       result.Policy.ID,
 		"policy_name":     result.Policy.Name,
 		"severity":        result.Policy.Severity,
 		"category":        result.Policy.Category,
-		"type":            result.Type,
-		"trigger":         result.Trigger,
 		"standards":       string(standards),
 		"entity_manifest": string(manifest),
 		"tags":            tags,
+		"description":     result.Policy.Description,
+		"how_to_solve":    result.Policy.HowToSolve,
 	}
 
 	namespace := result.Entity.Namespace
@@ -103,7 +104,11 @@ func NewK8sEventFromPolicyValidation(result PolicyValidation) (*v1.Event, error)
 			Name:        fmt.Sprintf("%v.%x", result.Entity.Name, timestamp.UnixNano()),
 			Namespace:   namespace,
 			Annotations: annotations,
-			Labels:      map[string]string{PolicyValidationEventLabelKey: result.Type},
+			Labels: map[string]string{
+				PolicyValidationIDLabel:      result.ID,
+				PolicyValidationTypeLabel:    result.Type,
+				PolicyValidationTriggerLabel: result.Trigger,
+			},
 		},
 		InvolvedObject: *involvedObject,
 		Related:        relatedObject,
@@ -120,7 +125,9 @@ func NewK8sEventFromPolicyValidation(result PolicyValidation) (*v1.Event, error)
 
 // NewPolicyValidationFRomK8sEvent gets policy violation result object from kubernetes event object
 func NewPolicyValidationFRomK8sEvent(event *v1.Event) (PolicyValidation, error) {
+	labels := event.ObjectMeta.Labels
 	annotations := event.ObjectMeta.Annotations
+
 	var status string
 	if event.Reason == EventReasonPolicyViolation {
 		status = PolicyValidationStatusViolating
@@ -130,19 +137,21 @@ func NewPolicyValidationFRomK8sEvent(event *v1.Event) (PolicyValidation, error) 
 	policyValidation := PolicyValidation{
 		AccountID: annotations["account_id"],
 		ClusterID: annotations["cluster_id"],
-		ID:        annotations["id"],
-		Type:      annotations["type"],
-		Trigger:   annotations["trigger"],
+		ID:        labels[PolicyValidationIDLabel],
+		Type:      labels[PolicyValidationTypeLabel],
+		Trigger:   labels[PolicyValidationTriggerLabel],
 		CreatedAt: event.FirstTimestamp.Time,
 		Message:   event.Message,
 		Status:    status,
 		Policy: Policy{
-			ID:        annotations["policy_id"],
-			Name:      annotations["policy_name"],
-			Category:  annotations["category"],
-			Severity:  annotations["severity"],
-			Reference: event.Related,
-			Tags:      strings.Split(annotations["tags"], ","),
+			ID:          annotations["policy_id"],
+			Name:        annotations["policy_name"],
+			Category:    annotations["category"],
+			Severity:    annotations["severity"],
+			Description: annotations["description"],
+			HowToSolve:  annotations["how_to_solve"],
+			Reference:   event.Related,
+			Tags:        strings.Split(annotations["tags"], ","),
 		},
 		Entity: Entity{
 			APIVersion:      event.InvolvedObject.APIVersion,

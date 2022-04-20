@@ -105,16 +105,20 @@ func TestPolicyToEvent(t *testing.T) {
 		assert.Equal(t, event.Annotations, map[string]string{
 			"account_id":      result.AccountID,
 			"cluster_id":      result.ClusterID,
-			"id":              result.ID,
 			"policy_id":       result.Policy.ID,
 			"policy_name":     result.Policy.Name,
 			"severity":        result.Policy.Severity,
 			"category":        result.Policy.Category,
-			"type":            result.Type,
-			"trigger":         result.Trigger,
+			"description":     result.Policy.Description,
+			"how_to_solve":    result.Policy.HowToSolve,
 			"tags":            strings.Join(result.Policy.Tags, ","),
 			"standards":       string(standards),
 			"entity_manifest": string(manifest),
+		})
+		assert.Equal(t, event.Labels, map[string]string{
+			PolicyValidationIDLabel:      result.ID,
+			PolicyValidationTypeLabel:    result.Type,
+			PolicyValidationTriggerLabel: result.Trigger,
 		})
 	}
 }
@@ -133,16 +137,20 @@ func TestEventToPolicy(t *testing.T) {
 			Annotations: map[string]string{
 				"account_id":      uuid.NewV4().String(),
 				"cluster_id":      uuid.NewV4().String(),
-				"id":              uuid.NewV4().String(),
-				"type":            "Admission",
-				"trigger":         "Admission",
 				"policy_id":       uuid.NewV4().String(),
+				"description":     uuid.NewV4().String(),
+				"how_to_solve":    uuid.NewV4().String(),
 				"policy_name":     "my-policy",
 				"category":        "category",
 				"severity":        "high",
 				"tags":            "tag1,tag2",
 				"entity_manifest": `{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"nginx-deployment","namespace":"default","uid":"af912668-957b-46d4-bc7a-51e6994cba56"},"spec":{"template":{"spec":{"containers":[{"image":"nginx:latest","imagePullPolicy":"Always","name":"nginx","ports":[{"containerPort":80,"protocol":"TCP"}]}]}}}}`,
 				"standards":       `[{"id":"weave.standards.cis-benchmark","controls":["weave.controls.cis-benchmark.5.5.1"]},{"id":"weave.standards.mitre-attack","controls":["weave.controls.mitre-attack.1.2"]},{"id":"weave.standards.gdpr","controls":["weave.controls.gdpr.25","weave.controls.gdpr.32","weave.controls.gdpr.24"]},{"id":"weave.standards.soc2-type-i","controls":["weave.controls.soc2-type-i.1.6.8"]}]`,
+			},
+			Labels: map[string]string{
+				PolicyValidationIDLabel:      uuid.NewV4().String(),
+				PolicyValidationTypeLabel:    "Admission",
+				PolicyValidationTriggerLabel: "Admission",
 			},
 		},
 		Message: "Policy event",
@@ -180,15 +188,20 @@ func TestEventToPolicy(t *testing.T) {
 	assert.Equal(t, event.Annotations, map[string]string{
 		"account_id":      policyValidation.AccountID,
 		"cluster_id":      policyValidation.ClusterID,
-		"id":              policyValidation.ID,
 		"policy_id":       policyValidation.Policy.ID,
 		"policy_name":     policyValidation.Policy.Name,
 		"severity":        policyValidation.Policy.Severity,
 		"category":        policyValidation.Policy.Category,
-		"type":            policyValidation.Type,
-		"trigger":         policyValidation.Trigger,
+		"description":     policyValidation.Policy.Description,
+		"how_to_solve":    policyValidation.Policy.HowToSolve,
 		"tags":            strings.Join(policyValidation.Policy.Tags, ","),
 		"standards":       string(standards),
 		"entity_manifest": string(manifest),
+	})
+
+	assert.Equal(t, event.Labels, map[string]string{
+		PolicyValidationIDLabel:      policyValidation.ID,
+		PolicyValidationTypeLabel:    policyValidation.Type,
+		PolicyValidationTriggerLabel: policyValidation.Trigger,
 	})
 }
