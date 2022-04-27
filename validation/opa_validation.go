@@ -23,6 +23,8 @@ type OpaValidator struct {
 	resultsSinks    []domain.PolicyValidationSink
 	writeCompliance bool
 	validationType  string
+	accountID       string
+	clusterID       string
 }
 
 // NewOPAValidator returns an opa validator to validate entities
@@ -30,6 +32,8 @@ func NewOPAValidator(
 	policiesSource domain.PoliciesSource,
 	writeCompliance bool,
 	validationType string,
+	accountID string,
+	clusterID string,
 	resultsSinks ...domain.PolicyValidationSink,
 ) *OpaValidator {
 	return &OpaValidator{
@@ -37,6 +41,8 @@ func NewOPAValidator(
 		resultsSinks:    resultsSinks,
 		writeCompliance: writeCompliance,
 		validationType:  validationType,
+		accountID:       accountID,
+		clusterID:       clusterID,
 	}
 }
 
@@ -103,6 +109,8 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 
 						result := domain.PolicyValidation{
 							ID:        uuid.NewV4().String(),
+							AccountID: v.accountID,
+							ClusterID: v.clusterID,
 							Policy:    policy,
 							Entity:    entity,
 							Type:      v.validationType,
@@ -126,6 +134,8 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 			} else {
 				result := domain.PolicyValidation{
 					ID:        uuid.NewV4().String(),
+					AccountID: v.accountID,
+					ClusterID: v.clusterID,
 					Policy:    policy,
 					Entity:    entity,
 					Type:      v.validationType,

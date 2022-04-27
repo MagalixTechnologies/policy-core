@@ -20,6 +20,8 @@ func TestNewOPAValidator(t *testing.T) {
 		writeCompliance bool
 		resultsSinks    []domain.PolicyValidationSink
 		validationType  string
+		accountID       string
+		clusterID       string
 	}
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -38,18 +40,22 @@ func TestNewOPAValidator(t *testing.T) {
 				writeCompliance: true,
 				resultsSinks:    []domain.PolicyValidationSink{sink},
 				validationType:  "TestValidate",
+				accountID:       "account-id",
+				clusterID:       "cluster-id",
 			},
 			want: &OpaValidator{
 				policiesSource:  policiesSource,
 				writeCompliance: true,
 				resultsSinks:    []domain.PolicyValidationSink{sink},
 				validationType:  "TestValidate",
+				accountID:       "account-id",
+				clusterID:       "cluster-id",
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewOPAValidator(tt.args.policiesSource, tt.args.writeCompliance, tt.args.validationType, tt.args.resultsSinks...); !reflect.DeepEqual(got, tt.want) {
+			if got := NewOPAValidator(tt.args.policiesSource, tt.args.writeCompliance, tt.args.validationType, tt.args.accountID, tt.args.clusterID, tt.args.resultsSinks...); !reflect.DeepEqual(got, tt.want) {
 				t.Fatalf("NewOPAValidator() = %v, want %v", got, tt.want)
 			}
 		})
