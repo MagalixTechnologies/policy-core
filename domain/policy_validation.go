@@ -31,7 +31,7 @@ type PolicyValidation struct {
 	Entity    Entity                 `json:"entity"`
 	Status    string                 `json:"status"`
 	Message   string                 `json:"message"`
-	Details   map[string]interface{} `json:"-"`
+	Details   map[string]interface{} `json:"details"`
 	Type      string                 `json:"source"`
 	Trigger   string                 `json:"trigger"`
 	CreatedAt time.Time              `json:"created_at"`
