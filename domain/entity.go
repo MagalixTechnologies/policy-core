@@ -17,8 +17,8 @@ type Entity struct {
 	Namespace       string                 `json:"namespace"`
 	Manifest        map[string]interface{} `json:"manifest"`
 	ResourceVersion string                 `json:"resource_version"`
-	Labels          map[string]string      `json:"labels"`
-	GitCommit       string                 `json:"git_commit,omitempty,"`
+	Labels          map[string]string      `json:"-"`
+	GitCommit       string                 `json:"-"`
 	HasParent       bool                   `json:"has_parent"`
 }
 
