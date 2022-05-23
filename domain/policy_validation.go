@@ -22,6 +22,21 @@ const (
 	PolicyValidationTriggerLabel    = "pac.weave.works/trigger"
 )
 
+// IaCMetadata defines the values of type iac for validation
+type IaCMetadata struct {
+	Branch        string                 `json:"branch" validate:"required"`
+	Commit        string                 `json:"commit" validate:"required"`
+	File          string                 `json:"file" validate:"required"`
+	PlatformName  string                 `json:"platform_name"`
+	PlatformInfo  map[string]interface{} `json:"platform"`
+	Repository    string                 `json:"repository" validate:"required"`
+	ResultUrl     string                 `json:"result_url"`
+	Source        string                 `json:"source" validate:"required"`
+	Type          string                 `json:"type" validate:"oneof=IaC Generic"`
+	KubeGuardID   string                 `json:"kubeguard_id"`
+	KubeGuardName string                 `json:"kubeguard_name"`
+}
+
 // PolicyValidation defines the result of a policy validation result against an entity
 type PolicyValidation struct {
 	ID        string                 `json:"id"`
@@ -31,10 +46,11 @@ type PolicyValidation struct {
 	Entity    Entity                 `json:"entity"`
 	Status    string                 `json:"status"`
 	Message   string                 `json:"message"`
-	Details   map[string]interface{} `json:"details"`
+	Details   map[string]interface{} `json:"-"`
 	Type      string                 `json:"source"`
 	Trigger   string                 `json:"trigger"`
 	CreatedAt time.Time              `json:"created_at"`
+	Metadata  interface{}            `json:"metadata"`
 }
 
 // PolicyValidationSummary contains violation and compliance result of a validate operation
