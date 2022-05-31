@@ -36,6 +36,7 @@ type IaCMetadata struct {
 	KubeGuardID   string                 `json:"kubeguard_id"`
 	KubeGuardName string                 `json:"kubeguard_name"`
 	Provider      string                 `json:"provider"`
+	PullRequest   string                 `json:"pull_request"`
 }
 
 // PolicyValidation defines the result of a policy validation result against an entity
