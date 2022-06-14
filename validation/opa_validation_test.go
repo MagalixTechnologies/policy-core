@@ -67,7 +67,10 @@ func cmpPolicyValidation(arg1, arg2 domain.PolicyValidation) bool {
 		return false
 	}
 
-	return arg1.Type == arg2.Type && arg1.Trigger == arg2.Trigger && arg1.Status == arg2.Status
+	return arg1.Type == arg2.Type &&
+		arg1.Trigger == arg2.Trigger &&
+		arg1.Status == arg2.Status &&
+		len(arg1.Occurrences) == len(arg2.Occurrences)
 }
 
 func getEntityFromStringSpec(entityStringSpec string) (domain.Entity, error) {
@@ -122,6 +125,9 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Type:    validationType,
 						Status:  domain.PolicyValidationStatusViolating,
 						Trigger: validationType,
+						Occurrences: []domain.Occurrence{
+							{},
+						},
 					},
 					{
 						Policy:  testdata.Policies["missingOwner"],
@@ -129,6 +135,9 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Type:    validationType,
 						Status:  domain.PolicyValidationStatusViolating,
 						Trigger: validationType,
+						Occurrences: []domain.Occurrence{
+							{},
+						},
 					},
 				},
 			},
@@ -177,6 +186,9 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Type:    validationType,
 						Status:  domain.PolicyValidationStatusViolating,
 						Trigger: validationType,
+						Occurrences: []domain.Occurrence{
+							{},
+						},
 					},
 				},
 			},
@@ -209,6 +221,9 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Type:    validationType,
 						Status:  domain.PolicyValidationStatusViolating,
 						Trigger: validationType,
+						Occurrences: []domain.Occurrence{
+							{},
+						},
 					},
 				},
 			},
@@ -241,6 +256,9 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Type:    validationType,
 						Status:  domain.PolicyValidationStatusViolating,
 						Trigger: validationType,
+						Occurrences: []domain.Occurrence{
+							{},
+						},
 					},
 				},
 			},
@@ -281,6 +299,9 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Type:    validationType,
 						Status:  domain.PolicyValidationStatusViolating,
 						Trigger: validationType,
+						Occurrences: []domain.Occurrence{
+							{},
+						},
 					},
 				},
 			},
@@ -363,13 +384,10 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Type:    validationType,
 						Status:  domain.PolicyValidationStatusViolating,
 						Trigger: validationType,
-					},
-					{
-						Policy:  testdata.Policies["runningAsRoot"],
-						Entity:  entity,
-						Type:    validationType,
-						Status:  domain.PolicyValidationStatusViolating,
-						Trigger: validationType,
+						Occurrences: []domain.Occurrence{
+							{},
+							{},
+						},
 					},
 				},
 			},

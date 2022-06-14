@@ -39,20 +39,26 @@ type IaCMetadata struct {
 	PullRequest   string                 `json:"pull_request"`
 }
 
+type Occurrence struct {
+	Message          string      `json:"message"`
+	ViolatingKey     *string     `json:"violating_key"`
+	RecommendedValue interface{} `json:"recommended_value"`
+}
+
 // PolicyValidation defines the result of a policy validation result against an entity
 type PolicyValidation struct {
-	ID        string                 `json:"id"`
-	AccountID string                 `json:"account_id"`
-	ClusterID string                 `json:"cluster_id"`
-	Policy    Policy                 `json:"policy"`
-	Entity    Entity                 `json:"entity"`
-	Status    string                 `json:"status"`
-	Message   string                 `json:"message"`
-	Details   map[string]interface{} `json:"-"`
-	Type      string                 `json:"source"`
-	Trigger   string                 `json:"trigger"`
-	CreatedAt time.Time              `json:"created_at"`
-	Metadata  interface{}            `json:"metadata"`
+	ID          string       `json:"id"`
+	AccountID   string       `json:"account_id"`
+	ClusterID   string       `json:"cluster_id"`
+	Policy      Policy       `json:"policy"`
+	Entity      Entity       `json:"entity"`
+	Status      string       `json:"status"`
+	Message     string       `json:"message"`
+	Occurrences []Occurrence `json:"occurrences"`
+	Type        string       `json:"source"`
+	Trigger     string       `json:"trigger"`
+	CreatedAt   time.Time    `json:"created_at"`
+	Metadata    interface{}  `json:"metadata"`
 }
 
 // PolicyValidationSummary contains violation and compliance result of a validate operation
