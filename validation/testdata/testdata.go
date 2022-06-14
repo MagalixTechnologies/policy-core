@@ -286,7 +286,7 @@ var (
 
 				result = {
 					"issue detected": true,
-					"msg": sprintf("Container spec.template.spec.containers[%v].securityContext.runAsNonRoot should be set to true ", [i]),
+					"msg": sprintf("Container spec.template.spec.containers[%v].securityContext.runAsNonRoot should be set to true", [i]),
 					"violating_key": sprintf("spec.template.spec.containers[%v].securityContext.runAsNonRoot", [i]),
 					"recommended_value": true,
 				}
