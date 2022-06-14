@@ -41,8 +41,8 @@ type IaCMetadata struct {
 
 type Occurrence struct {
 	Message          string      `json:"message"`
-	ViolatingKey     *string     `json:"violating_key"`
-	RecommendedValue interface{} `json:"recommended_value"`
+	ViolatingKey     *string     `json:"violating_key,omitempty"`
+	RecommendedValue interface{} `json:"recommended_value,omitempty"`
 }
 
 // PolicyValidation defines the result of a policy validation result against an entity
@@ -76,6 +76,17 @@ func (v *PolicyValidationSummary) GetViolationMessages() []string {
 	return messages
 }
 
+// GetViolationOccurrencesMessages get all occurrences messages from review results
+func (v *PolicyValidationSummary) GetViolationOccurrencesMessages() []string {
+	var messages []string
+	for _, violation := range v.Violations {
+		for _, occurrence := range violation.Occurrences {
+			messages = append(messages, occurrence.Message)
+		}
+	}
+	return messages
+}
+
 // NewK8sEventFromPolicyVlidation gets kubernetes event object from policy violation result object
 func NewK8sEventFromPolicyValidation(result PolicyValidation) (*v1.Event, error) {
 	var reason, action, etype string
@@ -98,7 +109,14 @@ func NewK8sEventFromPolicyValidation(result PolicyValidation) (*v1.Event, error)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse policy validation entity manifest: %w", err)
 	}
+
+	occurrences, err := json.Marshal(result.Occurrences)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse policy validation occurrences: %w", err)
+	}
+
 	tags := strings.Join(result.Policy.Tags, ",")
+
 	annotations := map[string]string{
 		"account_id":      result.AccountID,
 		"cluster_id":      result.ClusterID,
@@ -108,6 +126,7 @@ func NewK8sEventFromPolicyValidation(result PolicyValidation) (*v1.Event, error)
 		"category":        result.Policy.Category,
 		"standards":       string(standards),
 		"entity_manifest": string(manifest),
+		"occurrences":     string(occurrences),
 		"tags":            tags,
 		"description":     result.Policy.Description,
 		"how_to_solve":    result.Policy.HowToSolve,
@@ -193,6 +212,10 @@ func NewPolicyValidationFRomK8sEvent(event *v1.Event) (PolicyValidation, error) 
 	err = json.Unmarshal([]byte(annotations["entity_manifest"]), &policyValidation.Entity.Manifest)
 	if err != nil {
 		return policyValidation, fmt.Errorf("failed to get entity manifest from event: %w", err)
+	}
+	err = json.Unmarshal([]byte(annotations["occurrences"]), &policyValidation.Occurrences)
+	if err != nil {
+		return policyValidation, fmt.Errorf("failed to get occurrences from event: %w", err)
 	}
 	return policyValidation, nil
 }
