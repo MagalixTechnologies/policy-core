@@ -55,6 +55,11 @@ func TestPolicyToEvent(t *testing.T) {
 			Type:      "Admission",
 			Trigger:   "Admission",
 			CreatedAt: time.Now(),
+			Occurrences: []Occurrence{
+				{
+					Message: "test",
+				},
+			},
 		},
 		{
 			Policy:    policy,
@@ -64,6 +69,11 @@ func TestPolicyToEvent(t *testing.T) {
 			Type:      "Audit",
 			Trigger:   "PolicyChange",
 			CreatedAt: time.Now(),
+			Occurrences: []Occurrence{
+				{
+					Message: "test",
+				},
+			},
 		},
 	}
 
@@ -102,6 +112,9 @@ func TestPolicyToEvent(t *testing.T) {
 		assert.Nil(t, err)
 		standards, err := json.Marshal(result.Policy.Standards)
 		assert.Nil(t, err)
+		occurrences, err := json.Marshal(result.Occurrences)
+		assert.Nil(t, err)
+
 		assert.Equal(t, event.Annotations, map[string]string{
 			"account_id":      result.AccountID,
 			"cluster_id":      result.ClusterID,
@@ -114,6 +127,7 @@ func TestPolicyToEvent(t *testing.T) {
 			"tags":            strings.Join(result.Policy.Tags, ","),
 			"standards":       string(standards),
 			"entity_manifest": string(manifest),
+			"occurrences":     string(occurrences),
 		})
 		assert.Equal(t, event.Labels, map[string]string{
 			PolicyValidationIDLabel:      result.ID,
@@ -146,6 +160,7 @@ func TestEventToPolicy(t *testing.T) {
 				"tags":            "tag1,tag2",
 				"entity_manifest": `{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"nginx-deployment","namespace":"default","uid":"af912668-957b-46d4-bc7a-51e6994cba56"},"spec":{"template":{"spec":{"containers":[{"image":"nginx:latest","imagePullPolicy":"Always","name":"nginx","ports":[{"containerPort":80,"protocol":"TCP"}]}]}}}}`,
 				"standards":       `[{"id":"weave.standards.cis-benchmark","controls":["weave.controls.cis-benchmark.5.5.1"]},{"id":"weave.standards.mitre-attack","controls":["weave.controls.mitre-attack.1.2"]},{"id":"weave.standards.gdpr","controls":["weave.controls.gdpr.25","weave.controls.gdpr.32","weave.controls.gdpr.24"]},{"id":"weave.standards.soc2-type-i","controls":["weave.controls.soc2-type-i.1.6.8"]}]`,
+				"occurrences":     `[{"message":"test1"},{"message":"test2"}]`,
 			},
 			Labels: map[string]string{
 				PolicyValidationIDLabel:      uuid.NewV4().String(),
@@ -185,6 +200,9 @@ func TestEventToPolicy(t *testing.T) {
 	assert.Nil(t, err)
 	standards, err := json.Marshal(policyValidation.Policy.Standards)
 	assert.Nil(t, err)
+	occurrences, err := json.Marshal(policyValidation.Occurrences)
+	assert.Nil(t, err)
+
 	assert.Equal(t, event.Annotations, map[string]string{
 		"account_id":      policyValidation.AccountID,
 		"cluster_id":      policyValidation.ClusterID,
@@ -196,6 +214,7 @@ func TestEventToPolicy(t *testing.T) {
 		"how_to_solve":    policyValidation.Policy.HowToSolve,
 		"tags":            strings.Join(policyValidation.Policy.Tags, ","),
 		"standards":       string(standards),
+		"occurrences":     string(occurrences),
 		"entity_manifest": string(manifest),
 	})
 
