@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -68,10 +69,12 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 				<-bound
 				enqueueGroup.Done()
 			}()
+
 			policy := policies[index]
 			if !matchEntity(entity, policy) {
 				return
 			}
+
 			opaPolicy, err := opa.Parse(policy.Code, PolicyQuery)
 			if err != nil {
 				errsChan <- fmt.Errorf("failed to parse policy %s: %w", policy.ID, err)
@@ -83,46 +86,45 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 			err = opaPolicy.EvalGateKeeperCompliant(entity.Manifest, parameters, PolicyQuery)
 			if err != nil {
 				if errors.As(err, &opaErr) {
+					dmsg := fmt.Sprintf(
+						"%s in %s %s",
+						policy.Name,
+						strings.ToLower(entity.Kind),
+						entity.Name,
+					)
 					details := opaErr.GetDetails()
-					var violations []map[string]interface{}
+					var occurrences []domain.Occurrence
 					if arr, ok := details.([]interface{}); ok {
 						for _, item := range arr {
-							if violation, ok := item.(map[string]interface{}); ok {
-								violations = append(violations, violation)
-							}
+							occurrences = append(occurrences, parseOccurrence(dmsg, item))
 						}
-					} else if m, ok := details.(map[string]interface{}); ok {
-						violations = append(violations, m)
 					} else {
-						violations = append(violations, map[string]interface{}{})
+						occurrences = append(occurrences, parseOccurrence(dmsg, details))
 					}
 
-					for _, violation := range violations {
-						var title string
-						if msg, ok := violation["msg"]; ok {
-							title = msg.(string)
-						} else {
-							title = policy.Name
-						}
+					message := fmt.Sprintf(
+						"%s in %s %s (%d occurrences)",
+						policy.Name,
+						strings.ToLower(entity.Kind),
+						entity.Name,
+						len(occurrences),
+					)
 
-						message := fmt.Sprintf("%s in %s %s. Policy: %s", title, entity.Kind, entity.Name, policy.ID)
-
-						result := domain.PolicyValidation{
-							ID:        uuid.NewV4().String(),
-							AccountID: v.accountID,
-							ClusterID: v.clusterID,
-							Policy:    policy,
-							Entity:    entity,
-							Type:      v.validationType,
-							Trigger:   trigger,
-							CreatedAt: time.Now(),
-							Message:   message,
-							Status:    domain.PolicyValidationStatusViolating,
-							Details:   violation,
-						}
-
-						violationsChan <- result
+					result := domain.PolicyValidation{
+						ID:          uuid.NewV4().String(),
+						AccountID:   v.accountID,
+						ClusterID:   v.clusterID,
+						Policy:      policy,
+						Entity:      entity,
+						Type:        v.validationType,
+						Trigger:     trigger,
+						CreatedAt:   time.Now(),
+						Message:     message,
+						Status:      domain.PolicyValidationStatusViolating,
+						Occurrences: occurrences,
 					}
+
+					violationsChan <- result
 
 				} else {
 					errsChan <- fmt.Errorf(
@@ -195,4 +197,18 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 	writeToSinks(ctx, v.resultsSinks, PolicyValidationSummary, v.writeCompliance)
 
 	return &PolicyValidationSummary, nil
+}
+
+func parseOccurrence(msg string, in interface{}) domain.Occurrence {
+	occurrence := domain.Occurrence{Message: msg}
+	if v, ok := in.(map[string]interface{}); ok {
+		if msg, ok := v["msg"].(string); ok {
+			occurrence.Message = msg
+		}
+		if key, ok := v["violating_key"].(string); ok {
+			occurrence.ViolatingKey = &key
+		}
+		occurrence.RecommendedValue = v["recommended_value"]
+	}
+	return occurrence
 }

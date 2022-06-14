@@ -67,7 +67,23 @@ func cmpPolicyValidation(arg1, arg2 domain.PolicyValidation) bool {
 		return false
 	}
 
-	return arg1.Type == arg2.Type && arg1.Trigger == arg2.Trigger && arg1.Status == arg2.Status
+	if arg1.Message != arg2.Message {
+		return false
+	}
+
+	if len(arg1.Occurrences) == len(arg2.Occurrences) {
+		for i, occurrence := range arg1.Occurrences {
+			if occurrence.Message != arg2.Occurrences[i].Message {
+				return false
+			}
+		}
+	} else {
+		return false
+	}
+
+	return arg1.Type == arg2.Type &&
+		arg1.Trigger == arg2.Trigger &&
+		arg1.Status == arg2.Status
 }
 
 func getEntityFromStringSpec(entityStringSpec string) (domain.Entity, error) {
@@ -122,6 +138,12 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Type:    validationType,
 						Status:  domain.PolicyValidationStatusViolating,
 						Trigger: validationType,
+						Message: "Using latest image tag in container in deployment nginx-deployment (1 occurrences)",
+						Occurrences: []domain.Occurrence{
+							{
+								Message: "Image contains unapproved tag 'latest'",
+							},
+						},
 					},
 					{
 						Policy:  testdata.Policies["missingOwner"],
@@ -129,6 +151,12 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Type:    validationType,
 						Status:  domain.PolicyValidationStatusViolating,
 						Trigger: validationType,
+						Message: "Missing owner label in metadata in deployment nginx-deployment (1 occurrences)",
+						Occurrences: []domain.Occurrence{
+							{
+								Message: "you are missing a label with the key 'owner'",
+							},
+						},
 					},
 				},
 			},
@@ -177,6 +205,12 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Type:    validationType,
 						Status:  domain.PolicyValidationStatusViolating,
 						Trigger: validationType,
+						Message: "Missing owner label in metadata in deployment nginx-deployment (1 occurrences)",
+						Occurrences: []domain.Occurrence{
+							{
+								Message: "you are missing a label with the key 'owner'",
+							},
+						},
 					},
 				},
 			},
@@ -209,6 +243,12 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Type:    validationType,
 						Status:  domain.PolicyValidationStatusViolating,
 						Trigger: validationType,
+						Message: "Missing owner label in metadata in deployment nginx-deployment (1 occurrences)",
+						Occurrences: []domain.Occurrence{
+							{
+								Message: "you are missing a label with the key 'owner'",
+							},
+						},
 					},
 				},
 			},
@@ -241,6 +281,12 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Type:    validationType,
 						Status:  domain.PolicyValidationStatusViolating,
 						Trigger: validationType,
+						Message: "Missing owner label in metadata in deployment nginx-deployment (1 occurrences)",
+						Occurrences: []domain.Occurrence{
+							{
+								Message: "you are missing a label with the key 'owner'",
+							},
+						},
 					},
 				},
 			},
@@ -281,6 +327,12 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Type:    validationType,
 						Status:  domain.PolicyValidationStatusViolating,
 						Trigger: validationType,
+						Message: "Missing owner label in metadata in deployment nginx-deployment (1 occurrences)",
+						Occurrences: []domain.Occurrence{
+							{
+								Message: "you are missing a label with the key 'owner'",
+							},
+						},
 					},
 				},
 			},
@@ -363,13 +415,15 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Type:    validationType,
 						Status:  domain.PolicyValidationStatusViolating,
 						Trigger: validationType,
-					},
-					{
-						Policy:  testdata.Policies["runningAsRoot"],
-						Entity:  entity,
-						Type:    validationType,
-						Status:  domain.PolicyValidationStatusViolating,
-						Trigger: validationType,
+						Message: "Container Running As Root in deployment nginx-deployment (2 occurrences)",
+						Occurrences: []domain.Occurrence{
+							{
+								Message: "Container spec.template.spec.containers[0].securityContext.runAsNonRoot should be set to true",
+							},
+							{
+								Message: "Pod spec.template.spec.securityContext.runAsNonRoot should be set to true",
+							},
+						},
 					},
 				},
 			},
