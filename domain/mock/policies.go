@@ -35,6 +35,18 @@ func (m *MockPolicyValidationSink) EXPECT() *MockPolicyValidationSinkMockRecorde
 	return m.recorder
 }
 
+// Stop mocks base method.
+func (m *MockPolicyValidationSink) Stop() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Stop")
+}
+
+// Stop indicates an expected call of Stop.
+func (mr *MockPolicyValidationSinkMockRecorder) Stop() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockPolicyValidationSink)(nil).Stop))
+}
+
 // Write mocks base method.
 func (m *MockPolicyValidationSink) Write(arg0 context.Context, arg1 []domain.PolicyValidation) error {
 	m.ctrl.T.Helper()
