@@ -12,4 +12,7 @@ type PoliciesSource interface {
 type PolicyValidationSink interface {
 	// Write saves the results
 	Write(ctx context.Context, PolicyValidations []PolicyValidation) error
+
+	// Stop stops worker
+	Stop()
 }
