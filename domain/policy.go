@@ -38,6 +38,7 @@ type Policy struct {
 	Tags        []string           `json:"tags"`
 	Severity    string             `json:"severity"`
 	Standards   []PolicyStandard   `json:"standards"`
+	Provider    string             `json:"provider"`
 	Reference   interface{}        `json:"-"`
 	GitCommit   string             `json:"git_commit,omitempty"`
 }
