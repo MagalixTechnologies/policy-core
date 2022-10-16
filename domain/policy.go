@@ -13,10 +13,11 @@ type PolicyTargets struct {
 
 // PolicyParameters defines a needed input in a policy
 type PolicyParameters struct {
-	Name     string      `json:"name"`
-	Type     string      `json:"type"`
-	Value    interface{} `json:"value"`
-	Required bool        `json:"required"`
+	Name      string      `json:"name"`
+	Type      string      `json:"type"`
+	Value     interface{} `json:"value"`
+	Required  bool        `json:"required"`
+	ConfigRef string      `json:"config_referance,omitempty"`
 }
 
 type PolicyStandard struct {

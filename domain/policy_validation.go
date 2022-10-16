@@ -117,6 +117,11 @@ func NewK8sEventFromPolicyValidation(result PolicyValidation) (*v1.Event, error)
 
 	tags := strings.Join(result.Policy.Tags, ",")
 
+	parameters, err := json.Marshal(result.Policy.Parameters)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse policy validation parameters config: %w", err)
+	}
+
 	annotations := map[string]string{
 		"account_id":      result.AccountID,
 		"cluster_id":      result.ClusterID,
@@ -130,6 +135,7 @@ func NewK8sEventFromPolicyValidation(result PolicyValidation) (*v1.Event, error)
 		"tags":            tags,
 		"description":     result.Policy.Description,
 		"how_to_solve":    result.Policy.HowToSolve,
+		"parameters":      string(parameters),
 	}
 
 	namespace := result.Entity.Namespace
@@ -217,5 +223,10 @@ func NewPolicyValidationFRomK8sEvent(event *v1.Event) (PolicyValidation, error) 
 	if err != nil {
 		return policyValidation, fmt.Errorf("failed to get occurrences from event: %w", err)
 	}
+	err = json.Unmarshal([]byte(annotations["parameters"]), &policyValidation.Policy.Parameters)
+	if err != nil {
+		return policyValidation, fmt.Errorf("failed to get policy parameters from event: %w", err)
+	}
+
 	return policyValidation, nil
 }

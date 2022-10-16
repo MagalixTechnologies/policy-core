@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/MagalixTechnologies/core/logger"
 	opa "github.com/MagalixTechnologies/opa-core"
 	"github.com/MagalixTechnologies/policy-core/domain"
 	"github.com/MagalixTechnologies/uuid-go"
@@ -54,6 +55,11 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 		return nil, fmt.Errorf("Failed to get policies from source: %w", err)
 	}
 
+	policyConfig, err := v.policiesSource.GetPolicyConfig(ctx, entity)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get policy config from source: %w", err)
+	}
+
 	var enqueueGroup sync.WaitGroup
 	var dequeueGroup sync.WaitGroup
 	violationsChan := make(chan domain.PolicyValidation, len(policies))
@@ -83,6 +89,19 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 
 			var opaErr opa.OPAError
 			parameters := policy.GetParametersMap()
+			if config, ok := policyConfig.Config[policy.ID]; ok {
+				for k, v := range config.Parameters {
+					logger.Infow("overriding parameter", "policy", policy.ID, "param", k, "oldValue", parameters[k], "newValue", v.Value, "configRef", v.ConfigRef)
+					parameters[k] = v.Value
+				}
+
+				for i := range policy.Parameters {
+					if configParameter, ok := config.Parameters[policy.Parameters[i].Name]; ok {
+						policy.Parameters[i].Value = configParameter.Value
+						policy.Parameters[i].ConfigRef = configParameter.ConfigRef
+					}
+				}
+			}
 			err = opaPolicy.EvalGateKeeperCompliant(entity.Manifest, parameters, PolicyQuery)
 			if err != nil {
 				if errors.As(err, &opaErr) {
