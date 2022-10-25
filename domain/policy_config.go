@@ -1,21 +1,21 @@
 package domain
 
-type PolicyTargetApplication struct {
+type ConfigMatchApplication struct {
 	Kind      string `json:"kind"`
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 }
 
-type PolicyTargetResource struct {
+type ConfigMatchResource struct {
 	Kind      string `json:"kind"`
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 }
 
 type PolicyConfigTarget struct {
-	Namespaces   []string                  `json:"namespaces,omitempty"`
-	Applications []PolicyTargetApplication `json:"apps,omitempty"`
-	Resources    []PolicyTargetResource    `json:"resources,omitempty"`
+	Namespaces   []string                 `json:"namespaces,omitempty"`
+	Applications []ConfigMatchApplication `json:"apps,omitempty"`
+	Resources    []ConfigMatchResource    `json:"resources,omitempty"`
 }
 
 type PolicyConfigParameter struct {
