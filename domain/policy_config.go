@@ -12,7 +12,7 @@ type ConfigMatchResource struct {
 	Namespace string `json:"namespace"`
 }
 
-type PolicyConfigTarget struct {
+type PolicyConfigMatch struct {
 	Namespaces   []string                 `json:"namespaces,omitempty"`
 	Applications []ConfigMatchApplication `json:"apps,omitempty"`
 	Resources    []ConfigMatchResource    `json:"resources,omitempty"`
@@ -30,5 +30,5 @@ type PolicyConfigConfig struct {
 // PolicyConfig represents a policy config
 type PolicyConfig struct {
 	Config map[string]PolicyConfigConfig `json:"config"`
-	Match  PolicyConfigTarget            `json:"match"`
+	Match  PolicyConfigMatch             `json:"match"`
 }
