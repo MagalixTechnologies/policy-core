@@ -33,6 +33,15 @@ func TestPolicyToEvent(t *testing.T) {
 				Controls: []string{"1.1.1"},
 			},
 		},
+		Parameters: []PolicyParameters{
+			{
+				Name:      "param1",
+				Value:     "test",
+				Type:      "string",
+				Required:  true,
+				ConfigRef: "config-1",
+			},
+		},
 	}
 
 	entity := Entity{
@@ -114,6 +123,8 @@ func TestPolicyToEvent(t *testing.T) {
 		assert.Nil(t, err)
 		occurrences, err := json.Marshal(result.Occurrences)
 		assert.Nil(t, err)
+		parameters, err := json.Marshal(result.Policy.Parameters)
+		assert.Nil(t, err)
 
 		assert.Equal(t, event.Annotations, map[string]string{
 			"account_id":      result.AccountID,
@@ -128,6 +139,7 @@ func TestPolicyToEvent(t *testing.T) {
 			"standards":       string(standards),
 			"entity_manifest": string(manifest),
 			"occurrences":     string(occurrences),
+			"parameters":      string(parameters),
 		})
 		assert.Equal(t, event.Labels, map[string]string{
 			PolicyValidationIDLabel:      result.ID,

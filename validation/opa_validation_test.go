@@ -125,6 +125,8 @@ func TestOpaValidator_Validate(t *testing.T) {
 						testdata.Policies["imageTag"],
 						testdata.Policies["missingOwner"],
 					}, nil)
+					policiesSource.EXPECT().GetPolicyConfig(gomock.Any(), gomock.Any()).
+						Times(1).Return(nil, nil)
 					sink.EXPECT().Write(gomock.Any(), gomock.Any()).
 						Times(1).Return(nil)
 				},
@@ -192,6 +194,8 @@ func TestOpaValidator_Validate(t *testing.T) {
 						missingOwner,
 						imageTag,
 					}, nil)
+					policiesSource.EXPECT().GetPolicyConfig(gomock.Any(), gomock.Any()).
+						Times(1).Return(nil, nil)
 					sink.EXPECT().Write(gomock.Any(), gomock.Any()).
 						Times(1).Return(nil)
 				},
@@ -230,6 +234,8 @@ func TestOpaValidator_Validate(t *testing.T) {
 						missingOwner,
 						imageTag,
 					}, nil)
+					policiesSource.EXPECT().GetPolicyConfig(gomock.Any(), gomock.Any()).
+						Times(1).Return(nil, nil)
 					sink.EXPECT().Write(gomock.Any(), gomock.Any()).
 						Times(1).Return(nil)
 				},
@@ -268,6 +274,8 @@ func TestOpaValidator_Validate(t *testing.T) {
 						missingOwner,
 						imageTag,
 					}, nil)
+					policiesSource.EXPECT().GetPolicyConfig(gomock.Any(), gomock.Any()).
+						Times(1).Return(nil, nil)
 					sink.EXPECT().Write(gomock.Any(), gomock.Any()).
 						Times(1).Return(nil)
 				},
@@ -314,6 +322,8 @@ func TestOpaValidator_Validate(t *testing.T) {
 						missingOwner,
 						imageTag,
 					}, nil)
+					policiesSource.EXPECT().GetPolicyConfig(gomock.Any(), gomock.Any()).
+						Times(1).Return(nil, nil)
 					sink.EXPECT().Write(gomock.Any(), gomock.Any()).
 						Times(1).Return(nil)
 				},
@@ -349,6 +359,8 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Times(1).Return([]domain.Policy{
 						imageTag,
 					}, nil)
+					policiesSource.EXPECT().GetPolicyConfig(gomock.Any(), gomock.Any()).
+						Times(1).Return(nil, nil)
 					// expect 0 calls to sink write, no compliance or violation
 					sink.EXPECT().Write(gomock.Any(), gomock.Any()).
 						Times(0).Return(nil)
@@ -368,6 +380,8 @@ func TestOpaValidator_Validate(t *testing.T) {
 						testdata.Policies["imageTag"],
 						testdata.Policies["missingOwner"],
 					}, nil)
+					policiesSource.EXPECT().GetPolicyConfig(gomock.Any(), gomock.Any()).
+						Times(1).Return(nil, nil)
 					sink.EXPECT().Write(gomock.Any(), gomock.Any()).
 						Times(1).Return(nil)
 				},
@@ -402,6 +416,8 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Times(1).Return([]domain.Policy{
 						testdata.Policies["runningAsRoot"],
 					}, nil)
+					policiesSource.EXPECT().GetPolicyConfig(gomock.Any(), gomock.Any()).
+						Times(1).Return(nil, nil)
 					sink.EXPECT().Write(gomock.Any(), gomock.Any()).
 						Times(1).Return(nil)
 				},
@@ -438,6 +454,8 @@ func TestOpaValidator_Validate(t *testing.T) {
 						Times(1).Return([]domain.Policy{
 						testdata.Policies["badPolicyCode"],
 					}, nil)
+					policiesSource.EXPECT().GetPolicyConfig(gomock.Any(), gomock.Any()).
+						Times(1).Return(nil, nil)
 					sink.EXPECT().Write(gomock.Any(), gomock.Any()).
 						Times(0).Return(nil)
 				},

@@ -223,9 +223,11 @@ func NewPolicyValidationFRomK8sEvent(event *v1.Event) (PolicyValidation, error) 
 	if err != nil {
 		return policyValidation, fmt.Errorf("failed to get occurrences from event: %w", err)
 	}
-	err = json.Unmarshal([]byte(annotations["parameters"]), &policyValidation.Policy.Parameters)
-	if err != nil {
-		return policyValidation, fmt.Errorf("failed to get policy parameters from event: %w", err)
+	if _, ok := annotations["parameters"]; ok {
+		err = json.Unmarshal([]byte(annotations["parameters"]), &policyValidation.Policy.Parameters)
+		if err != nil {
+			return policyValidation, fmt.Errorf("failed to get policy parameters from event: %w", err)
+		}
 	}
 
 	return policyValidation, nil

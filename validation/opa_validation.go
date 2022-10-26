@@ -88,23 +88,26 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 			}
 
 			parameters := map[string]interface{}{}
-
-			policyConfig, policyConfigExists := config.Config[policy.ID]
-			for i, policyParam := range policy.Parameters {
-				parameters[policyParam.Name] = policyParam.Value
-				if policyConfigExists {
-					if configParam, ok := policyConfig.Parameters[policyParam.Name]; ok {
-						logger.Infow(
-							"overriding parameter",
-							"policy", policy.ID,
-							"parameter", policyParam.Name,
-							"oldValue", policyParam.Value,
-							"newValue", configParam.Value,
-							"configRef", configParam.ConfigRef,
-						)
-						parameters[policyParam.Name] = configParam.Value
-						policy.Parameters[i].Value = configParam.Value
-						policy.Parameters[i].ConfigRef = configParam.ConfigRef
+			if config == nil {
+				parameters = policy.GetParametersMap()
+			} else {
+				policyConfig, policyConfigExists := config.Config[policy.ID]
+				for i, policyParam := range policy.Parameters {
+					parameters[policyParam.Name] = policyParam.Value
+					if policyConfigExists {
+						if configParam, ok := policyConfig.Parameters[policyParam.Name]; ok {
+							logger.Infow(
+								"overriding parameter",
+								"policy", policy.ID,
+								"parameter", policyParam.Name,
+								"oldValue", policyParam.Value,
+								"newValue", configParam.Value,
+								"configRef", configParam.ConfigRef,
+							)
+							parameters[policyParam.Name] = configParam.Value
+							policy.Parameters[i].Value = configParam.Value
+							policy.Parameters[i].ConfigRef = configParam.ConfigRef
+						}
 					}
 				}
 			}
