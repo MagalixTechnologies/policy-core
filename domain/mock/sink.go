@@ -49,3 +49,18 @@ func (mr *MockPoliciesSourceMockRecorder) GetAll(arg0 interface{}) *gomock.Call 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockPoliciesSource)(nil).GetAll), arg0)
 }
+
+// GetPolicyConfig mocks base method.
+func (m *MockPoliciesSource) GetPolicyConfig(arg0 context.Context, arg1 domain.Entity) (*domain.PolicyConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPolicyConfig", arg0, arg1)
+	ret0, _ := ret[0].(*domain.PolicyConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPolicyConfig indicates an expected call of GetPolicyConfig.
+func (mr *MockPoliciesSourceMockRecorder) GetPolicyConfig(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicyConfig", reflect.TypeOf((*MockPoliciesSource)(nil).GetPolicyConfig), arg0, arg1)
+}
