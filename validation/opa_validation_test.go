@@ -446,6 +446,92 @@ func TestOpaValidator_Validate(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "pass because of policy config value",
+			init: init{
+				writeCompliance: true,
+				loadStubs: func(policiesSource *mock.MockPoliciesSource, sink *mock.MockPolicyValidationSink) {
+					policiesSource.EXPECT().GetAll(gomock.Any()).
+						Times(1).Return([]domain.Policy{
+						testdata.Policies["replicaCount"],
+					}, nil)
+					policiesSource.EXPECT().GetPolicyConfig(gomock.Any(), gomock.Any()).
+						Times(1).Return(&domain.PolicyConfig{
+						Config: map[string]domain.PolicyConfigConfig{
+							testdata.Policies["replicaCount"].ID: {
+								Parameters: map[string]domain.PolicyConfigParameter{
+									"replica_count": {
+										Value:     3,
+										ConfigRef: "my-config",
+									},
+								},
+							},
+						},
+					}, nil)
+					sink.EXPECT().Write(gomock.Any(), gomock.Any()).
+						Times(1).Return(nil)
+				},
+			},
+			entity: entity,
+			want: &domain.PolicyValidationSummary{
+				Compliances: []domain.PolicyValidation{
+					{
+						Policy:  testdata.Policies["replicaCount"],
+						Entity:  compliantEntity,
+						Type:    validationType,
+						Status:  domain.PolicyValidationStatusCompliant,
+						Trigger: validationType,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "fail because of policy config value",
+			init: init{
+				writeCompliance: false,
+				loadStubs: func(policiesSource *mock.MockPoliciesSource, sink *mock.MockPolicyValidationSink) {
+					policiesSource.EXPECT().GetAll(gomock.Any()).
+						Times(1).Return([]domain.Policy{
+						testdata.Policies["replicaCount"],
+					}, nil)
+					policiesSource.EXPECT().GetPolicyConfig(gomock.Any(), gomock.Any()).
+						Times(1).Return(&domain.PolicyConfig{
+						Config: map[string]domain.PolicyConfigConfig{
+							testdata.Policies["replicaCount"].ID: {
+								Parameters: map[string]domain.PolicyConfigParameter{
+									"replica_count": {
+										Value:     5,
+										ConfigRef: "my-config",
+									},
+								},
+							},
+						},
+					}, nil)
+					sink.EXPECT().Write(gomock.Any(), gomock.Any()).
+						Times(1).Return(nil)
+				},
+			},
+			entity: entity,
+			want: &domain.PolicyValidationSummary{
+				Violations: []domain.PolicyValidation{
+					{
+						Policy:  testdata.Policies["replicaCount"],
+						Entity:  entity,
+						Type:    validationType,
+						Status:  domain.PolicyValidationStatusViolating,
+						Trigger: validationType,
+						Message: "Minimum replica count in deployment nginx-deployment (1 occurrences)",
+						Occurrences: []domain.Occurrence{
+							{
+								Message: "Replica count must be greater than or equal to '5'; found '3'.",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "error loading policy code",
 			init: init{
 				writeCompliance: false,
