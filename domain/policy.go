@@ -17,7 +17,7 @@ type PolicyParameters struct {
 	Type      string      `json:"type"`
 	Value     interface{} `json:"value"`
 	Required  bool        `json:"required"`
-	ConfigRef string      `json:"config_referance,omitempty"`
+	ConfigRef string      `json:"config_ref,omitempty"`
 }
 
 type PolicyStandard struct {
@@ -41,6 +41,7 @@ type Policy struct {
 	Standards   []PolicyStandard   `json:"standards"`
 	Reference   interface{}        `json:"-"`
 	GitCommit   string             `json:"git_commit,omitempty"`
+	Modes       []string           `json:"modes"`
 }
 
 // ObjectRef returns the kubernetes object reference of the policy

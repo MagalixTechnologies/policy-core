@@ -42,6 +42,7 @@ func TestPolicyToEvent(t *testing.T) {
 				ConfigRef: "config-1",
 			},
 		},
+		Modes: []string{"audit", "admission"},
 	}
 
 	entity := Entity{
@@ -140,6 +141,7 @@ func TestPolicyToEvent(t *testing.T) {
 			"entity_manifest": string(manifest),
 			"occurrences":     string(occurrences),
 			"parameters":      string(parameters),
+			"modes":           "audit,admission",
 		})
 		assert.Equal(t, event.Labels, map[string]string{
 			PolicyValidationIDLabel:      result.ID,
@@ -173,6 +175,7 @@ func TestEventToPolicy(t *testing.T) {
 				"entity_manifest": `{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"nginx-deployment","namespace":"default","uid":"af912668-957b-46d4-bc7a-51e6994cba56"},"spec":{"template":{"spec":{"containers":[{"image":"nginx:latest","imagePullPolicy":"Always","name":"nginx","ports":[{"containerPort":80,"protocol":"TCP"}]}]}}}}`,
 				"standards":       `[{"id":"weave.standards.cis-benchmark","controls":["weave.controls.cis-benchmark.5.5.1"]},{"id":"weave.standards.mitre-attack","controls":["weave.controls.mitre-attack.1.2"]},{"id":"weave.standards.gdpr","controls":["weave.controls.gdpr.25","weave.controls.gdpr.32","weave.controls.gdpr.24"]},{"id":"weave.standards.soc2-type-i","controls":["weave.controls.soc2-type-i.1.6.8"]}]`,
 				"occurrences":     `[{"message":"test1"},{"message":"test2"}]`,
+				"modes":           "audit,admission",
 			},
 			Labels: map[string]string{
 				PolicyValidationIDLabel:      uuid.NewV4().String(),
@@ -215,6 +218,8 @@ func TestEventToPolicy(t *testing.T) {
 	occurrences, err := json.Marshal(policyValidation.Occurrences)
 	assert.Nil(t, err)
 
+	assert.Equal(t, []string{"audit", "admission"}, policyValidation.Policy.Modes)
+
 	assert.Equal(t, event.Annotations, map[string]string{
 		"account_id":      policyValidation.AccountID,
 		"cluster_id":      policyValidation.ClusterID,
@@ -228,6 +233,7 @@ func TestEventToPolicy(t *testing.T) {
 		"standards":       string(standards),
 		"occurrences":     string(occurrences),
 		"entity_manifest": string(manifest),
+		"modes":           "audit,admission",
 	})
 
 	assert.Equal(t, event.Labels, map[string]string{

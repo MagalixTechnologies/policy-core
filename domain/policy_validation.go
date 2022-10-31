@@ -136,6 +136,7 @@ func NewK8sEventFromPolicyValidation(result PolicyValidation) (*v1.Event, error)
 		"description":     result.Policy.Description,
 		"how_to_solve":    result.Policy.HowToSolve,
 		"parameters":      string(parameters),
+		"modes":           strings.Join(result.Policy.Modes, ","),
 	}
 
 	namespace := result.Entity.Namespace
@@ -201,6 +202,7 @@ func NewPolicyValidationFRomK8sEvent(event *v1.Event) (PolicyValidation, error) 
 			HowToSolve:  annotations["how_to_solve"],
 			Reference:   event.Related,
 			Tags:        strings.Split(annotations["tags"], ","),
+			Modes:       strings.Split(annotations["modes"], ","),
 		},
 		Entity: Entity{
 			APIVersion:      event.InvolvedObject.APIVersion,

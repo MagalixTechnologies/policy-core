@@ -13,6 +13,7 @@ type PolicySetFilters struct {
 type PolicySet struct {
 	ID      string           `json:"id"`
 	Name    string           `json:"name"`
+	Mode    string           `json:"mode"`
 	Filters PolicySetFilters `json:"filters"`
 }
 
