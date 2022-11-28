@@ -55,7 +55,7 @@ func TestNewOPAValidator(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewOPAValidator(tt.args.policiesSource, tt.args.writeCompliance, tt.args.validationType, tt.args.accountID, tt.args.clusterID, tt.args.resultsSinks...); !reflect.DeepEqual(got, tt.want) {
+			if got := NewOPAValidator(tt.args.policiesSource, tt.args.writeCompliance, tt.args.validationType, tt.args.accountID, tt.args.clusterID, false, tt.args.resultsSinks...); !reflect.DeepEqual(got, tt.want) {
 				t.Fatalf("NewOPAValidator() = %v, want %v", got, tt.want)
 			}
 		})

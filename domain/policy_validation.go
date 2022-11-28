@@ -43,6 +43,7 @@ type Occurrence struct {
 	Message          string      `json:"message"`
 	ViolatingKey     *string     `json:"violating_key,omitempty"`
 	RecommendedValue interface{} `json:"recommended_value,omitempty"`
+	Mutated          bool        `json:"-"`
 }
 
 // PolicyValidation defines the result of a policy validation result against an entity
@@ -65,6 +66,7 @@ type PolicyValidation struct {
 type PolicyValidationSummary struct {
 	Violations  []PolicyValidation
 	Compliances []PolicyValidation
+	Mutation    *MutationResult
 }
 
 // GetViolationMessages get all violation messages from review results

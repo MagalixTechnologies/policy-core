@@ -27,6 +27,7 @@ type OpaValidator struct {
 	validationType  string
 	accountID       string
 	clusterID       string
+	mutate          bool
 }
 
 // NewOPAValidator returns an opa validator to validate entities
@@ -36,6 +37,7 @@ func NewOPAValidator(
 	validationType string,
 	accountID string,
 	clusterID string,
+	mutate bool,
 	resultsSinks ...domain.PolicyValidationSink,
 ) *OpaValidator {
 	return &OpaValidator{
@@ -45,6 +47,7 @@ func NewOPAValidator(
 		validationType:  validationType,
 		accountID:       accountID,
 		clusterID:       clusterID,
+		mutate:          mutate,
 	}
 }
 
@@ -64,6 +67,7 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 	var dequeueGroup sync.WaitGroup
 	violationsChan := make(chan domain.PolicyValidation, len(policies))
 	compliancesChan := make(chan domain.PolicyValidation, len(policies))
+
 	errsChan := make(chan error, len(policies))
 	bound := make(chan struct{}, maxWorkers)
 
@@ -122,6 +126,7 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 						strings.ToLower(entity.Kind),
 						entity.Name,
 					)
+
 					details := opaErr.GetDetails()
 					var occurrences []domain.Occurrence
 					if arr, ok := details.([]interface{}); ok {
@@ -139,7 +144,6 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 						entity.Name,
 						len(occurrences),
 					)
-
 					result := domain.PolicyValidation{
 						ID:          uuid.NewV4().String(),
 						AccountID:   v.accountID,
@@ -153,7 +157,6 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 						Status:      domain.PolicyValidationStatusViolating,
 						Occurrences: occurrences,
 					}
-
 					violationsChan <- result
 
 				} else {
@@ -220,10 +223,41 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 			errs)
 	}
 
-	PolicyValidationSummary := domain.PolicyValidationSummary{
-		Violations:  violations,
-		Compliances: compliances,
+	var mutationResult *domain.MutationResult
+	var unmutatedViolations []domain.PolicyValidation
+
+	if v.mutate {
+		mutationResult, err = domain.NewMutationResult(entity)
+		if err != nil {
+			return nil, err
+		}
+		for i, violation := range violations {
+			occurrences, err := mutationResult.Mutate(violation.Occurrences)
+			if err != nil {
+				return nil, err
+			}
+			var unmutatedOccurrences []domain.Occurrence
+			for _, occurrence := range occurrences {
+				if !occurrence.Mutated {
+					unmutatedOccurrences = append(unmutatedOccurrences, occurrence)
+				}
+			}
+			if len(unmutatedOccurrences) == 0 {
+				continue
+			}
+			violations[i].Occurrences = unmutatedOccurrences
+			unmutatedViolations = append(unmutatedViolations, violation)
+		}
+	} else {
+		unmutatedViolations = violations
 	}
+
+	PolicyValidationSummary := domain.PolicyValidationSummary{
+		Violations:  unmutatedViolations,
+		Compliances: compliances,
+		Mutation:    mutationResult,
+	}
+
 	writeToSinks(ctx, v.resultsSinks, PolicyValidationSummary, v.writeCompliance)
 
 	return &PolicyValidationSummary, nil
