@@ -151,7 +151,7 @@ func TestOpaValidator_Mutate(t *testing.T) {
 			result, err := v.Validate(context.Background(), tt.entity, validationType)
 			assert.Nil(err)
 
-			b, _ := result.Mutation.Mutated()
+			b, _ := result.Mutation.NewResource()
 			fmt.Println(string(b))
 
 			assert.NotNil(result.Mutation)

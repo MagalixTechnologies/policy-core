@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	regex = regexp.MustCompile("^([a-zA-Z0-9]+)\\[([0-9]+)\\]")
+	jsonPathArrRegex = regexp.MustCompile("^([a-zA-Z0-9]+)\\[([0-9]+)\\]")
 )
 
 const (
@@ -23,6 +23,7 @@ type MutationResult struct {
 	node *yaml.RNode
 }
 
+// NewMutationResult create new MutationResult object
 func NewMutationResult(entity Entity) (*MutationResult, error) {
 	raw, err := json.Marshal(entity.Manifest)
 	if err != nil {
@@ -41,6 +42,7 @@ func NewMutationResult(entity Entity) (*MutationResult, error) {
 	}, nil
 }
 
+// Mutate mutate resource
 func (m *MutationResult) Mutate(occurrences []Occurrence) ([]Occurrence, error) {
 	var mutated bool
 	for i, occurrence := range occurrences {
@@ -52,23 +54,27 @@ func (m *MutationResult) Mutate(occurrences []Occurrence) ([]Occurrence, error) 
 		pathGetter := yaml.LookupCreate(yaml.MappingNode, path...)
 		node, err := m.node.Pipe(pathGetter)
 		if err != nil {
-			logger.Errorw("failed to mutate")
+			logger.Errorw("failed to mutate", "error", err)
 			continue
 		}
 
 		if node == nil {
-			logger.Errorw("field not found")
+			logger.Errorw("field not found", "path", occurrence.ViolatingKey)
 			continue
 		}
 
 		value := occurrence.RecommendedValue
 		if number, ok := value.(json.Number); ok {
-			value, _ = number.Float64()
+			value, err = number.Float64()
+			if err != nil {
+				logger.Errorw("failed to parse number", "error", err)
+				continue
+			}
 		}
 
 		err = node.Document().Encode(value)
 		if err != nil {
-			logger.Errorw("failed to mutate")
+			logger.Errorw("failed to encode recommended value", "path", occurrence.ViolatingKey, "value", occurrence.RecommendedValue)
 			continue
 		}
 
@@ -83,11 +89,13 @@ func (m *MutationResult) Mutate(occurrences []Occurrence) ([]Occurrence, error) 
 	return occurrences, nil
 }
 
-func (m *MutationResult) Old() []byte {
+// OldResource return old resource
+func (m *MutationResult) OldResource() []byte {
 	return m.raw
 }
 
-func (m *MutationResult) Mutated() ([]byte, error) {
+// NewResource return mutated resource
+func (m *MutationResult) NewResource() ([]byte, error) {
 	return m.node.MarshalJSON()
 }
 
@@ -95,7 +103,7 @@ func parseKeyPath(path string) []string {
 	var keys []string
 	parts := strings.Split(path, ".")
 	for _, part := range parts {
-		groups := regex.FindStringSubmatch(part)
+		groups := jsonPathArrRegex.FindStringSubmatch(part)
 		if groups == nil {
 			keys = append(keys, part)
 		} else {

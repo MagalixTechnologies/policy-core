@@ -52,7 +52,7 @@ func TestMutation(t *testing.T) {
 			}
 		}
 
-		mutated, err := result.Mutated()
+		mutated, err := result.NewResource()
 		assert.Nil(t, err)
 
 		expectedMutatedEntity, err := ioutil.ReadFile(tt.mutatedEntityFile)
