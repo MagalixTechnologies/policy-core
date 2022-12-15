@@ -232,6 +232,9 @@ func (v *OpaValidator) Validate(ctx context.Context, entity domain.Entity, trigg
 			return nil, err
 		}
 		for i, violation := range violations {
+			if !violation.Policy.Mutate {
+				continue
+			}
 			occurrences, err := mutationResult.Mutate(violation.Occurrences)
 			if err != nil {
 				return nil, err

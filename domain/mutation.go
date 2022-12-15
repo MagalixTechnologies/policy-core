@@ -14,6 +14,10 @@ var (
 	regex = regexp.MustCompile("^([a-zA-Z0-9]+)\\[([0-9]+)\\]")
 )
 
+const (
+	mutatedLabel = "pac.weave.works/mutated"
+)
+
 type MutationResult struct {
 	raw  []byte
 	node *yaml.RNode
@@ -38,6 +42,7 @@ func NewMutationResult(entity Entity) (*MutationResult, error) {
 }
 
 func (m *MutationResult) Mutate(occurrences []Occurrence) ([]Occurrence, error) {
+	var mutated bool
 	for i, occurrence := range occurrences {
 		if occurrence.ViolatingKey == nil || occurrence.RecommendedValue == nil {
 			continue
@@ -48,6 +53,11 @@ func (m *MutationResult) Mutate(occurrences []Occurrence) ([]Occurrence, error) 
 		node, err := m.node.Pipe(pathGetter)
 		if err != nil {
 			logger.Errorw("failed to mutate")
+			continue
+		}
+
+		if node == nil {
+			logger.Errorw("field not found")
 			continue
 		}
 
@@ -63,8 +73,13 @@ func (m *MutationResult) Mutate(occurrences []Occurrence) ([]Occurrence, error) 
 		}
 
 		occurrences[i].Mutated = true
+		mutated = true
 	}
-
+	if mutated {
+		labels := m.node.GetLabels()
+		labels[mutatedLabel] = ""
+		m.node.SetLabels(labels)
+	}
 	return occurrences, nil
 }
 
