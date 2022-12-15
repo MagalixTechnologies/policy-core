@@ -55,7 +55,7 @@ func TestNewOPAValidator(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewOPAValidator(tt.args.policiesSource, tt.args.writeCompliance, tt.args.validationType, tt.args.accountID, tt.args.clusterID, tt.args.resultsSinks...); !reflect.DeepEqual(got, tt.want) {
+			if got := NewOPAValidator(tt.args.policiesSource, tt.args.writeCompliance, tt.args.validationType, tt.args.accountID, tt.args.clusterID, false, tt.args.resultsSinks...); !reflect.DeepEqual(got, tt.want) {
 				t.Fatalf("NewOPAValidator() = %v, want %v", got, tt.want)
 			}
 		})
@@ -93,6 +93,74 @@ func getEntityFromStringSpec(entityStringSpec string) (domain.Entity, error) {
 		return domain.Entity{}, fmt.Errorf("invalid string format: %w", err)
 	}
 	return domain.NewEntityFromSpec(entitySpec), nil
+}
+
+func TestOpaValidator_Mutate(t *testing.T) {
+	type init struct {
+		loadStubs       func(*mock.MockPoliciesSource, *mock.MockPolicyValidationSink)
+		writeCompliance bool
+	}
+	assert := require.New(t)
+	entityText := testdata.Entity
+	validationType := "unit-test"
+	entity, err := getEntityFromStringSpec(entityText)
+	assert.Nil(err)
+
+	tests := []struct {
+		name        string
+		init        init
+		entity      domain.Entity
+		violations  int
+		occurrences int
+	}{
+		{
+			name: "mutate all violations",
+			init: init{
+				writeCompliance: false,
+				loadStubs: func(policiesSource *mock.MockPoliciesSource, sink *mock.MockPolicyValidationSink) {
+					policiesSource.EXPECT().GetAll(gomock.Any()).
+						Times(1).Return([]domain.Policy{
+						testdata.Policies["missingOwner"],
+					}, nil)
+					policiesSource.EXPECT().GetPolicyConfig(gomock.Any(), gomock.Any()).
+						Times(1).Return(nil, nil)
+					sink.EXPECT().Write(gomock.Any(), gomock.Any()).
+						Times(0).Return(nil)
+				},
+			},
+			entity:      entity,
+			occurrences: 0,
+			violations:  0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			policiesSource := mock.NewMockPoliciesSource(ctrl)
+			sink := mock.NewMockPolicyValidationSink(ctrl)
+			tt.init.loadStubs(policiesSource, sink)
+			v := &OpaValidator{
+				policiesSource:  policiesSource,
+				resultsSinks:    []domain.PolicyValidationSink{sink},
+				writeCompliance: tt.init.writeCompliance,
+				validationType:  validationType,
+				mutate:          true,
+			}
+			result, err := v.Validate(context.Background(), tt.entity, validationType)
+			assert.Nil(err)
+
+			b, _ := result.Mutation.NewResource()
+			fmt.Println(string(b))
+
+			assert.NotNil(result.Mutation)
+			assert.Equal(tt.violations, len(result.Violations))
+			if tt.occurrences > 0 {
+				assert.Equal(tt.occurrences, len(result.Violations[0].Occurrences))
+			}
+		})
+	}
 }
 
 func TestOpaValidator_Validate(t *testing.T) {

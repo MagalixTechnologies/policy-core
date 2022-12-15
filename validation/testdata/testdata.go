@@ -162,6 +162,7 @@ var (
 		contains_kind(kind, kinds) {
 		kinds[_] = kind
 		}`,
+			Mutate: true,
 			Parameters: []domain.PolicyParameters{
 				{
 					Name:     "image_tag",
@@ -209,8 +210,8 @@ var (
 			  result = {
 				"issue detected": true,
 				"msg": sprintf("you are missing a label with the key '%v'", [label]),
-				"violating_key": "metadata.labels",
-				"recommended_value": label
+				"violating_key": "metadata.labels.owner",
+				"recommended_value": "test"
 			  }
 			}
 		
@@ -220,6 +221,7 @@ var (
 			contains_kind(kind, kinds) {
 			  kinds[_] = kind
 			}`,
+			Mutate: true,
 			Parameters: []domain.PolicyParameters{
 				{
 					Name:     "exclude_namespace",

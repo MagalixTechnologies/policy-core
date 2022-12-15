@@ -42,6 +42,7 @@ type Policy struct {
 	Reference   interface{}        `json:"-"`
 	GitCommit   string             `json:"git_commit,omitempty"`
 	Modes       []string           `json:"modes"`
+	Mutate      bool               `json:"mutate"`
 }
 
 // ObjectRef returns the kubernetes object reference of the policy
