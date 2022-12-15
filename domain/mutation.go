@@ -42,7 +42,7 @@ func NewMutationResult(entity Entity) (*MutationResult, error) {
 	}, nil
 }
 
-// Mutate mutate resource
+// Mutate mutate resource by applying the recommended values of the given occurrences
 func (m *MutationResult) Mutate(occurrences []Occurrence) ([]Occurrence, error) {
 	var mutated bool
 	for i, occurrence := range occurrences {
@@ -54,7 +54,7 @@ func (m *MutationResult) Mutate(occurrences []Occurrence) ([]Occurrence, error) 
 		pathGetter := yaml.LookupCreate(yaml.MappingNode, path...)
 		node, err := m.node.Pipe(pathGetter)
 		if err != nil {
-			logger.Errorw("failed to mutate", "error", err)
+			logger.Errorw("failed while getting field's node", "error", err)
 			continue
 		}
 
@@ -89,7 +89,7 @@ func (m *MutationResult) Mutate(occurrences []Occurrence) ([]Occurrence, error) 
 	return occurrences, nil
 }
 
-// OldResource return old resource
+// OldResource return old resource before mutation
 func (m *MutationResult) OldResource() []byte {
 	return m.raw
 }
