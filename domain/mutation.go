@@ -26,13 +26,13 @@ type MutationResult struct {
 func NewMutationResult(entity Entity) (*MutationResult, error) {
 	raw, err := json.Marshal(entity.Manifest)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal entity. error: %w", err)
+		return nil, fmt.Errorf("failed to marshal entity %s. error: %w", entity.Name, err)
 	}
 
 	var ynode yaml.Node
 	err = yaml.Unmarshal(raw, &ynode)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal entity. error: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal entity %s. error: %w", entity.Name, err)
 	}
 
 	return &MutationResult{
